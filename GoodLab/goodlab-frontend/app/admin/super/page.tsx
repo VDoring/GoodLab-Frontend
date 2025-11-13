@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,47 +22,40 @@ import {
 } from "@/components/ui/dialog";
 import { Shield, ShieldOff, Search, Users, UserCog } from "lucide-react";
 import type { User, UserRole } from "@/types";
+import { userDB, initializeMockDB } from "@/lib/mock-db";
+import { useToast } from "@/hooks/use-toast";
+import { useAuthStore } from "@/store";
+import { useRouter } from "next/navigation";
 
 export default function SuperAdminPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const user = useAuthStore((state) => state.user);
+
+  const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionType, setActionType] = useState<"grant" | "revoke" | null>(null);
 
-  // TODO: Replace with actual data from store
-  const users: User[] = [
-    {
-      id: "1",
-      email: "hong@example.com",
-      name: "홍길동",
-      role: "admin",
-      avatar_url: "",
-      created_at: "2026-01-15T10:00:00Z",
-    },
-    {
-      id: "2",
-      email: "kim@example.com",
-      name: "김철수",
-      role: "user",
-      avatar_url: "",
-      created_at: "2026-02-01T14:30:00Z",
-    },
-    {
-      id: "3",
-      email: "lee@example.com",
-      name: "이영희",
-      role: "team_leader",
-      avatar_url: "",
-      created_at: "2026-02-05T09:15:00Z",
-    },
-    {
-      id: "4",
-      email: "park@example.com",
-      name: "박민수",
-      role: "user",
-      avatar_url: "",
-      created_at: "2026-02-10T11:20:00Z",
-    },
-  ];
+  useEffect(() => {
+    // 슈퍼관리자 권한 체크
+    if (!user || user.role !== 'super_admin') {
+      router.push('/403');
+      return;
+    }
+
+    loadUsers();
+  }, [user, router]);
+
+  const loadUsers = () => {
+    initializeMockDB();
+    const allUsers = userDB.getAll();
+    setUsers(allUsers);
+  };
+
+  if (!user || user.role !== 'super_admin') {
+    return null;
+  }
 
   const stats = {
     total: users.length,
@@ -124,14 +117,24 @@ export default function SuperAdminPage() {
   const handleConfirmAction = () => {
     if (!selectedUser || !actionType) return;
 
-    // TODO: Implement actual permission change
-    console.log(
-      `${actionType === "grant" ? "Grant" : "Revoke"} admin to:`,
-      selectedUser.id
-    );
-    alert(
-      `${actionType === "grant" ? "교수 권한 부여" : "교수 권한 회수"} 완료! (백엔드 연동 필요)`
-    );
+    const newRole: UserRole = actionType === "grant" ? "admin" : "user";
+    const success = userDB.update(selectedUser.id, { role: newRole });
+
+    if (success) {
+      toast({
+        title: actionType === "grant" ? "교수 권한 부여 완료" : "교수 권한 회수 완료",
+        description: `${selectedUser.name}님의 권한이 변경되었습니다.`,
+      });
+
+      // 사용자 목록 다시 로드
+      loadUsers();
+    } else {
+      toast({
+        title: "권한 변경 실패",
+        description: "사용자를 찾을 수 없습니다.",
+        variant: "destructive",
+      });
+    }
 
     setSelectedUser(null);
     setActionType(null);

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +35,10 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useTeamStore, useRoomStore, useAuthStore } from "@/store";
+import { teamMemberDB, userDB } from "@/lib/mock-db";
+import { useToast } from "@/hooks/use-toast";
+import { useRequireAuth } from "@/hooks";
 
 const integrationSchema = z.object({
   github_url: z
@@ -53,42 +57,48 @@ type IntegrationFormData = z.infer<typeof integrationSchema>;
 
 export default function TeamDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const teamId = params.id as string;
   const [isIntegrationDialogOpen, setIsIntegrationDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // TODO: Replace with actual data from store
-  const team = {
-    id: teamId,
-    name: "팀 A",
-    room: { id: "1", title: "캡스톤 디자인 (2026-1학기)" },
-    leader: { id: "1", name: "김철수", email: "kim@example.com", avatar: "" },
-    github_url: "https://github.com/team-a/project",
-    notion_url: "https://notion.so/team-a/workspace",
-    members: [
-      {
-        id: "1",
-        name: "김철수",
-        email: "kim@example.com",
-        avatar: "",
-        isLeader: true,
-      },
-      {
-        id: "2",
-        name: "이영희",
-        email: "lee@example.com",
-        avatar: "",
-        isLeader: false,
-      },
-      {
-        id: "3",
-        name: "박민수",
-        email: "park@example.com",
-        avatar: "",
-        isLeader: false,
-      },
-    ],
-  };
+  const { isAuthenticated } = useRequireAuth();
+  const { toast } = useToast();
+  const user = useAuthStore((state) => state.user);
+  const teams = useTeamStore((state) => state.teams);
+  const fetchTeam = useTeamStore((state) => state.fetchTeam);
+  const updateTeam = useTeamStore((state) => state.updateTeam);
+  const getTeamMembers = useTeamStore((state) => state.getTeamMembers);
+  const changeTeamLeader = useTeamStore((state) => state.changeTeamLeader);
+  const removeMemberFromTeam = useTeamStore((state) => state.removeMemberFromTeam);
+  const rooms = useRoomStore((state) => state.rooms);
+  const fetchRooms = useRoomStore((state) => state.fetchRooms);
+
+  const team = teams.find((t) => t.id === teamId);
+  const room = team ? rooms.find((r) => r.id === team.room_id) : null;
+  const members = getTeamMembers(teamId);
+  const leader = team?.leader_id ? userDB.getById(team.leader_id) : null;
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchTeam(teamId);
+      fetchRooms();
+    }
+  }, [isAuthenticated, teamId, fetchTeam, fetchRooms]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (!team || !room) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-96">
+          <p className="text-muted-foreground">팀을 찾을 수 없습니다.</p>
+        </div>
+      </MainLayout>
+    );
+  }
 
   const getInitials = (name: string) => {
     return name
@@ -113,36 +123,63 @@ export default function TeamDetailPage() {
   const onSubmitIntegration = async (data: IntegrationFormData) => {
     setIsLoading(true);
     try {
-      // TODO: Implement integration update
-      console.log("Integration data:", data);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert("연동 설정이 저장되었습니다! (백엔드 연동 필요)");
-      setIsIntegrationDialogOpen(false);
+      const success = updateTeam(teamId, {
+        github_url: data.github_url || undefined,
+        notion_url: data.notion_url || undefined,
+      });
+
+      if (success) {
+        toast({
+          title: "연동 설정 저장 완료",
+          description: "GitHub와 Notion 연동 정보가 저장되었습니다.",
+        });
+        setIsIntegrationDialogOpen(false);
+        fetchTeam(teamId);
+      } else {
+        throw new Error("Failed to update team");
+      }
     } catch (error) {
       console.error("Integration error:", error);
-      alert("연동 설정 저장 실패");
+      toast({
+        title: "연동 설정 저장 실패",
+        description: "연동 정보 저장 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleSetLeader = (userId: string) => {
-    // TODO: Implement set leader
-    console.log("Set leader:", userId);
-    alert(`팀장 지정 기능 (백엔드 연동 필요)`);
+    const member = members.find((m) => m.id === userId);
+    if (!member) return;
+
+    if (confirm(`${member.name}님을 팀장으로 지정하시겠습니까?`)) {
+      changeTeamLeader(teamId, userId);
+      toast({
+        title: "팀장 변경 완료",
+        description: `${member.name}님이 새로운 팀장이 되었습니다.`,
+      });
+      fetchTeam(teamId);
+    }
   };
 
   const handleRemoveMember = (userId: string) => {
-    // TODO: Implement remove member
-    console.log("Remove member:", userId);
-    if (confirm("정말 이 팀원을 방출하시겠습니까?")) {
-      alert(`팀원 방출 기능 (백엔드 연동 필요)`);
+    const member = members.find((m) => m.id === userId);
+    if (!member) return;
+
+    if (confirm(`정말 ${member.name}님을 팀에서 방출하시겠습니까?`)) {
+      removeMemberFromTeam(teamId, userId);
+      toast({
+        title: "팀원 방출 완료",
+        description: `${member.name}님이 팀에서 제거되었습니다.`,
+      });
+      fetchTeam(teamId);
     }
   };
 
   const handleStartAnalysis = () => {
-    // TODO: Implement analysis start
-    alert("분석을 시작합니다! (백엔드 연동 필요)");
+    router.push(`/team/${teamId}/analysis`);
   };
 
   return (
@@ -156,11 +193,11 @@ export default function TeamDetailPage() {
               {team.name}
             </h1>
             <p className="text-muted-foreground">
-              {team.room.title}
+              {room.title}
             </p>
-            {team.leader && (
+            {leader && (
               <p className="text-sm text-muted-foreground mt-1">
-                팀장: {team.leader.name}
+                팀장: {leader.name}
               </p>
             )}
           </div>
@@ -243,55 +280,63 @@ export default function TeamDetailPage() {
           <CardHeader>
             <CardTitle>팀원 목록</CardTitle>
             <CardDescription>
-              총 {team.members.length}명의 팀원
+              총 {members.length}명의 팀원
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {team.members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={member.avatar} alt={member.name} />
-                      <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{member.name}</p>
-                        {member.isLeader && (
-                          <Crown className="h-4 w-4 text-yellow-500" />
-                        )}
+              {members.map((member) => {
+                const isLeader = leader?.id === member.id;
+                return (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={member.avatar_url} alt={member.name} />
+                        <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{member.name}</p>
+                          {isLeader && (
+                            <Crown className="h-4 w-4 text-yellow-500" />
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {member.email}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {member.email}
-                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      {!isLeader && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSetLeader(member.id)}
+                        >
+                          팀장 지정
+                        </Button>
+                      )}
+                      {!isLeader && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRemoveMember(member.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    {!member.isLeader && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSetLeader(member.id)}
-                      >
-                        팀장 지정
-                      </Button>
-                    )}
-                    {!member.isLeader && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveMember(member.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+                );
+              })}
+              {members.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  아직 팀원이 없습니다.
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>

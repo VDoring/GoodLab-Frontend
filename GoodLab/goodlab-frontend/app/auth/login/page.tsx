@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -28,11 +28,21 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const login = useAuthStore((state) => state.login);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  // 이미 로그인된 경우 대시보드로 리다이렉트
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push(redirect || "/dashboard");
+    }
+  }, [isAuthenticated, router, redirect]);
 
   const {
     register,
@@ -50,8 +60,8 @@ export default function LoginPage() {
       const result = await login(data.email, data.password);
 
       if (result.success) {
-        // 로그인 성공 - 대시보드로 이동
-        router.push("/dashboard");
+        // 로그인 성공 - redirect가 있으면 해당 페이지로, 없으면 대시보드로 이동
+        router.push(redirect || "/dashboard");
       } else {
         // 로그인 실패 - 에러 메시지 표시
         setErrorMessage(result.error || "로그인에 실패했습니다.");
@@ -133,5 +143,17 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <p>로딩 중...</p>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -81,20 +81,42 @@ export interface AnalysisResult {
 }
 
 // Document Types
+export type DocumentPermissionLevel = 'read' | 'write' | 'admin';
+
+export interface TiptapContent {
+  type: string;
+  content?: TiptapContent[];
+  attrs?: Record<string, any>;
+  text?: string;
+  marks?: Array<{
+    type: string;
+    attrs?: Record<string, any>;
+  }>;
+}
+
 export interface Document {
   id: string;
   room_id: string;
-  team_id?: string;
+  team_id?: string; // NULL이면 방 전체 문서
   title: string;
-  content: any; // Tiptap JSON format
+  content: TiptapContent; // Tiptap JSON format
   created_by: string;
   created_at: string;
   updated_at: string;
+  last_edited_by?: string; // 마지막 편집자
 }
 
 export interface DocumentPermission {
   id: string;
   document_id: string;
   user_id: string;
-  permission: 'read' | 'write' | 'admin';
+  permission: DocumentPermissionLevel;
+}
+
+// Document with relations (populated data)
+export interface DocumentWithRelations extends Document {
+  creator?: User;
+  room?: Room;
+  team?: Team;
+  permissions?: DocumentPermission[];
 }

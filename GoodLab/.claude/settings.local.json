@@ -9,7 +9,16 @@
       "Bash(taskkill:*)",
       "Bash(powershell -Command \"Stop-Process -Id 25256 -Force\")",
       "Bash(nul)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npx shadcn@latest add toast)",
+      "Bash(npx shadcn@latest add select:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(timeout:*)",
+      "Bash(find \"C:\\Users\\DOR\\Desktop\\GoodLab\\goodlab-frontend\\app\" -type f ( -name \"*.ts\" -o -name \"*.tsx\" ) 2)",
+      "Bash(find \"C:\\Users\\DOR\\Desktop\\GoodLab\\goodlab-frontend\\components\" -type f ( -name \"*.ts\" -o -name \"*.tsx\" ) 2)",
+      "Bash(find:*)",
+      "Bash(powershell:*)",
+      "Bash(del /F /Q \".next\\dev\\lock\" 2)"
     ],
     "deny": [],
     "ask": []

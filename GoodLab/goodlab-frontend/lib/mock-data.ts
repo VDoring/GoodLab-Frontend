@@ -1,4 +1,4 @@
-import type { User, Room, Team, TeamMember, RoomMember, AnalysisResult, GitHubAnalysis, NotionAnalysis } from '@/types';
+import type { User, Room, Team, TeamMember, RoomMember, AnalysisResult, GitHubAnalysis, NotionAnalysis, Document, DocumentPermission } from '@/types';
 
 // 더미 유저 데이터
 export const MOCK_USERS: User[] = [
@@ -288,3 +288,421 @@ export const MOCK_PASSWORDS: Record<string, string> = {
   'student2@goodlab.com': 'password123',
   'student3@goodlab.com': 'password123',
 };
+
+// 더미 문서 데이터
+export const MOCK_DOCUMENTS: Document[] = [
+  {
+    id: 'doc-1',
+    room_id: 'room-1',
+    team_id: undefined, // 방 전체 문서
+    title: '캡스톤 프로젝트 가이드라인',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 1 },
+          content: [{ type: 'text', text: '캡스톤 프로젝트 가이드라인' }]
+        },
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text: '2026년 1학기 캡스톤 디자인 프로젝트를 환영합니다.' }]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '프로젝트 목표' }]
+        },
+        {
+          type: 'bulletList',
+          content: [
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '실무 중심의 프로젝트 경험' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '팀 협업 능력 향상' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '문제 해결 능력 배양' }]
+              }]
+            }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '평가 기준' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: '프로젝트는 다음 기준으로 평가됩니다:' }
+          ]
+        },
+        {
+          type: 'orderedList',
+          content: [
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '기술적 완성도 (40%)' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '팀워크 및 협업 (30%)' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '문서화 및 발표 (30%)' }]
+              }]
+            }
+          ]
+        }
+      ]
+    },
+    created_by: 'user-2',
+    created_at: '2024-02-05T09:00:00Z',
+    updated_at: '2024-02-05T09:00:00Z',
+    last_edited_by: 'user-2',
+  },
+  {
+    id: 'doc-2',
+    room_id: 'room-1',
+    team_id: 'team-1', // 팀 A 문서
+    title: '팀 A - 프로젝트 기획서',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 1 },
+          content: [{ type: 'text', text: 'AI 기반 학습 플랫폼' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: '프로젝트명: ', marks: [{ type: 'bold' }] },
+            { type: 'text', text: 'SmartLearn AI' }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '팀원' }]
+        },
+        {
+          type: 'bulletList',
+          content: [
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '박팀장 (팀장) - 백엔드 개발' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '최학생 - 프론트엔드 개발' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '정학생 - AI 모델 개발' }]
+              }]
+            }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '프로젝트 개요' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'AI 기반 개인화 학습 플랫폼으로, 학생들의 학습 패턴을 분석하여 최적의 학습 경로를 제안합니다.' }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '기술 스택' }]
+        },
+        {
+          type: 'codeBlock',
+          attrs: { language: 'json' },
+          content: [{
+            type: 'text',
+            text: '{\n  "frontend": "React + TypeScript",\n  "backend": "Node.js + Express",\n  "ai": "Python + TensorFlow",\n  "database": "PostgreSQL"\n}'
+          }]
+        }
+      ]
+    },
+    created_by: 'user-3',
+    created_at: '2024-02-10T14:30:00Z',
+    updated_at: '2024-03-01T16:45:00Z',
+    last_edited_by: 'user-4',
+  },
+  {
+    id: 'doc-3',
+    room_id: 'room-1',
+    team_id: 'team-1',
+    title: '팀 A - 주간 회의록 (Week 3)',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 1 },
+          content: [{ type: 'text', text: '주간 회의록 - Week 3' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: '날짜: ', marks: [{ type: 'bold' }] },
+            { type: 'text', text: '2024년 3월 15일' }
+          ]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: '참석자: ', marks: [{ type: 'bold' }] },
+            { type: 'text', text: '박팀장, 최학생, 정학생' }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '논의 사항' }]
+        },
+        {
+          type: 'taskList',
+          content: [
+            {
+              type: 'taskItem',
+              attrs: { checked: true },
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '백엔드 API 설계 완료' }]
+              }]
+            },
+            {
+              type: 'taskItem',
+              attrs: { checked: true },
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '프론트엔드 UI 프로토타입 완성' }]
+              }]
+            },
+            {
+              type: 'taskItem',
+              attrs: { checked: false },
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: 'AI 모델 훈련 진행 중 (70%)' }]
+              }]
+            }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '다음 주 목표' }]
+        },
+        {
+          type: 'bulletList',
+          content: [
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: 'AI 모델 통합 완료' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '테스트 코드 작성' }]
+              }]
+            }
+          ]
+        }
+      ]
+    },
+    created_by: 'user-3',
+    created_at: '2024-03-15T15:00:00Z',
+    updated_at: '2024-03-15T15:00:00Z',
+    last_edited_by: 'user-3',
+  },
+  {
+    id: 'doc-4',
+    room_id: 'room-1',
+    team_id: 'team-2',
+    title: '팀 B - 프로젝트 제안서',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 1 },
+          content: [{ type: 'text', text: '스마트 캠퍼스 시스템' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'IoT 기반 캠퍼스 통합 관리 시스템을 개발합니다.' }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '주요 기능' }]
+        },
+        {
+          type: 'bulletList',
+          content: [
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '스마트 출결 관리' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '강의실 환경 모니터링' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '에너지 절감 시스템' }]
+              }]
+            }
+          ]
+        }
+      ]
+    },
+    created_by: 'user-4',
+    created_at: '2024-02-12T10:00:00Z',
+    updated_at: '2024-02-12T10:00:00Z',
+    last_edited_by: 'user-4',
+  },
+  {
+    id: 'doc-5',
+    room_id: 'room-2',
+    team_id: undefined, // 방 전체 문서
+    title: '소프트웨어 공학 프로젝트 요구사항',
+    content: {
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 1 },
+          content: [{ type: 'text', text: '프로젝트 요구사항 명세서' }]
+        },
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: '소프트웨어 공학 수업의 프로젝트 요구사항입니다.' }
+          ]
+        },
+        {
+          type: 'heading',
+          attrs: { level: 2 },
+          content: [{ type: 'text', text: '필수 요구사항' }]
+        },
+        {
+          type: 'orderedList',
+          content: [
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: 'UML 다이어그램 작성' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '테스트 케이스 작성' }]
+              }]
+            },
+            {
+              type: 'listItem',
+              content: [{
+                type: 'paragraph',
+                content: [{ type: 'text', text: '형상 관리 (Git)' }]
+              }]
+            }
+          ]
+        }
+      ]
+    },
+    created_by: 'user-2',
+    created_at: '2024-02-08T11:00:00Z',
+    updated_at: '2024-02-08T11:00:00Z',
+    last_edited_by: 'user-2',
+  },
+];
+
+// 더미 문서 권한 데이터
+export const MOCK_DOCUMENT_PERMISSIONS: DocumentPermission[] = [
+  {
+    id: 'perm-1',
+    document_id: 'doc-2',
+    user_id: 'user-4',
+    permission: 'write',
+  },
+  {
+    id: 'perm-2',
+    document_id: 'doc-2',
+    user_id: 'user-5',
+    permission: 'write',
+  },
+  {
+    id: 'perm-3',
+    document_id: 'doc-3',
+    user_id: 'user-4',
+    permission: 'read',
+  },
+  {
+    id: 'perm-4',
+    document_id: 'doc-1',
+    user_id: 'user-3',
+    permission: 'read',
+  },
+  {
+    id: 'perm-5',
+    document_id: 'doc-1',
+    user_id: 'user-4',
+    permission: 'read',
+  },
+];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -40,8 +40,16 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export default function SignupPage() {
   const router = useRouter();
   const registerUser = useAuthStore((state) => state.register);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+
+  // 이미 로그인된 경우 대시보드로 리다이렉트
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
 
   const {
     register,

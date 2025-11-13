@@ -8,6 +8,8 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (data: { name?: string; avatar_url?: string }) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   setUser: (user: User | null) => void;
   logout: () => void;
 }
@@ -62,6 +64,45 @@ export const useAuthStore = create<AuthState>()(
 
         // 자동 로그인
         set({ user: newUser, isAuthenticated: true });
+        return { success: true };
+      },
+
+      updateProfile: async (data: { name?: string; avatar_url?: string }) => {
+        const currentUser = useAuthStore.getState().user;
+        if (!currentUser) {
+          return { success: false, error: '로그인이 필요합니다.' };
+        }
+
+        // 유저 정보 업데이트
+        const updatedUser = userDB.update(currentUser.id, data);
+        if (!updatedUser) {
+          return { success: false, error: '프로필 업데이트에 실패했습니다.' };
+        }
+
+        // 상태 업데이트
+        set({ user: updatedUser });
+        return { success: true };
+      },
+
+      changePassword: async (currentPassword: string, newPassword: string) => {
+        const currentUser = useAuthStore.getState().user;
+        if (!currentUser) {
+          return { success: false, error: '로그인이 필요합니다.' };
+        }
+
+        // 현재 비밀번호 확인
+        const isValid = passwordDB.verify(currentUser.email, currentPassword);
+        if (!isValid) {
+          return { success: false, error: '현재 비밀번호가 올바르지 않습니다.' };
+        }
+
+        // 새 비밀번호 검증
+        if (newPassword.length < 6) {
+          return { success: false, error: '비밀번호는 최소 6자 이상이어야 합니다.' };
+        }
+
+        // 비밀번호 업데이트
+        passwordDB.set(currentUser.email, newPassword);
         return { success: true };
       },
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { User, Room, Team, TeamMember, RoomMember, AnalysisResult } from '@/types';
+import type { User, Room, Team, TeamMember, RoomMember, AnalysisResult, Document, DocumentPermission } from '@/types';
 import {
   MOCK_USERS,
   MOCK_ROOMS,
@@ -9,6 +9,8 @@ import {
   MOCK_ROOM_MEMBERS,
   MOCK_PASSWORDS,
   MOCK_ANALYSIS_RESULT,
+  MOCK_DOCUMENTS,
+  MOCK_DOCUMENT_PERMISSIONS,
 } from './mock-data';
 
 // LocalStorage 키
@@ -20,6 +22,8 @@ const KEYS = {
   ROOM_MEMBERS: 'goodlab_room_members',
   PASSWORDS: 'goodlab_passwords',
   ANALYSIS_RESULTS: 'goodlab_analysis_results',
+  DOCUMENTS: 'goodlab_documents',
+  DOCUMENT_PERMISSIONS: 'goodlab_document_permissions',
   INITIALIZED: 'goodlab_initialized',
 };
 
@@ -37,6 +41,8 @@ export function initializeMockDB() {
   localStorage.setItem(KEYS.ROOM_MEMBERS, JSON.stringify(MOCK_ROOM_MEMBERS));
   localStorage.setItem(KEYS.PASSWORDS, JSON.stringify(MOCK_PASSWORDS));
   localStorage.setItem(KEYS.ANALYSIS_RESULTS, JSON.stringify([MOCK_ANALYSIS_RESULT]));
+  localStorage.setItem(KEYS.DOCUMENTS, JSON.stringify(MOCK_DOCUMENTS));
+  localStorage.setItem(KEYS.DOCUMENT_PERMISSIONS, JSON.stringify(MOCK_DOCUMENT_PERMISSIONS));
   localStorage.setItem(KEYS.INITIALIZED, 'true');
 
   console.log('✅ Mock DB initialized');

@@ -1,2 +1,2 @@
-// Feature components will be defined here
-export {};
+export { QRCodeDialog } from './qr-code-dialog';
+export { TiptapEditor } from './tiptap-editor';
