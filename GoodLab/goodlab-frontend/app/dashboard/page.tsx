@@ -25,32 +25,6 @@ export default function DashboardPage() {
   // For analysis, we'll fetch per team
   const [analysisResults, setAnalysisResults] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (user) {
-      // Fetch all data
-      getUserRooms(user.id);
-      getUserTeams(user.id);
-      fetchDocuments();
-
-      // Fetch analysis results for all teams
-      // Since analysisStore doesn't have fetchAll, we'll use the DB directly
-      if (typeof window !== 'undefined') {
-        const analysisDB = localStorage.getItem('goodlab_analysis_results');
-        if (analysisDB) {
-          const allAnalyses = JSON.parse(analysisDB);
-          setAnalysisResults(allAnalyses);
-        }
-      }
-
-      // Generate recent activities
-      generateActivities();
-    }
-  }, [user, getUserRooms, getUserTeams, fetchDocuments]);
-
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
   const generateActivities = () => {
     const recentActivities: Activity[] = [];
 
@@ -94,6 +68,35 @@ export default function DashboardPage() {
 
     setActivities(recentActivities.slice(0, 5));
   };
+
+  useEffect(() => {
+    if (user) {
+      // Fetch all data
+      getUserRooms(user.id);
+      getUserTeams(user.id);
+      fetchDocuments();
+
+      // Fetch analysis results for all teams
+      if (typeof window !== 'undefined') {
+        const analysisDB = localStorage.getItem('goodlab_analysis_results');
+        if (analysisDB) {
+          const allAnalyses = JSON.parse(analysisDB);
+          setAnalysisResults(allAnalyses);
+        }
+      }
+    }
+  }, [user, getUserRooms, getUserTeams, fetchDocuments]);
+
+  // Generate activities when data changes
+  useEffect(() => {
+    if (user && documents.length > 0) {
+      generateActivities();
+    }
+  }, [user, documents, analysisResults, rooms, teams]);
+
+  if (!isAuthenticated || !user) {
+    return null;
+  }
 
   const getTimeAgo = (date: string) => {
     const now = new Date();

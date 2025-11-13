@@ -50,6 +50,38 @@ export const MOCK_USERS: User[] = [
     avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student3',
     created_at: '2024-01-01T00:00:00Z',
   },
+  {
+    id: 'user-7',
+    email: 'student4@goodlab.com',
+    name: '윤학생',
+    role: 'user',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student4',
+    created_at: '2024-01-02T00:00:00Z',
+  },
+  {
+    id: 'user-8',
+    email: 'student5@goodlab.com',
+    name: '송학생',
+    role: 'user',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student5',
+    created_at: '2024-01-02T00:00:00Z',
+  },
+  {
+    id: 'user-9',
+    email: 'student6@goodlab.com',
+    name: '임학생',
+    role: 'user',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student6',
+    created_at: '2024-01-02T00:00:00Z',
+  },
+  {
+    id: 'user-10',
+    email: 'professor2@goodlab.com',
+    name: '박교수',
+    role: 'admin',
+    avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=professor2',
+    created_at: '2024-01-01T00:00:00Z',
+  },
 ];
 
 // 더미 방 데이터
@@ -75,6 +107,17 @@ export const MOCK_ROOMS: Room[] = [
     invite_code: 'SEPROJECT2026',
     created_at: '2024-02-01T00:00:00Z',
     updated_at: '2024-02-01T00:00:00Z',
+  },
+  {
+    id: 'room-3',
+    title: '웹 프로그래밍 실습',
+    description: '2026년 1학기 웹 프로그래밍 실습',
+    created_by: 'user-10',
+    start_date: '2026-03-01',
+    end_date: '2026-06-30',
+    invite_code: 'WEBPROG2026',
+    created_at: '2024-02-05T00:00:00Z',
+    updated_at: '2024-02-05T00:00:00Z',
   },
 ];
 
@@ -105,8 +148,28 @@ export const MOCK_TEAMS: Team[] = [
     room_id: 'room-2',
     name: '팀 C',
     leader_id: 'user-5',
+    github_url: 'https://github.com/team-c/seproject',
+    notion_url: 'https://notion.so/team-c',
     created_at: '2024-02-01T00:00:00Z',
     updated_at: '2024-02-01T00:00:00Z',
+  },
+  {
+    id: 'team-4',
+    room_id: 'room-3',
+    name: '웹팀 1',
+    leader_id: 'user-7',
+    github_url: 'https://github.com/webteam1/project',
+    notion_url: 'https://notion.so/webteam1',
+    created_at: '2024-02-05T00:00:00Z',
+    updated_at: '2024-02-05T00:00:00Z',
+  },
+  {
+    id: 'team-5',
+    room_id: 'room-3',
+    name: '웹팀 2',
+    leader_id: 'user-8',
+    created_at: '2024-02-05T00:00:00Z',
+    updated_at: '2024-02-05T00:00:00Z',
   },
 ];
 
@@ -154,6 +217,41 @@ export const MOCK_TEAM_MEMBERS: TeamMember[] = [
     role: 'team_leader',
     joined_at: '2024-02-01T00:00:00Z',
   },
+  {
+    id: 'tm-7',
+    team_id: 'team-4',
+    user_id: 'user-7',
+    role: 'team_leader',
+    joined_at: '2024-02-05T00:00:00Z',
+  },
+  {
+    id: 'tm-8',
+    team_id: 'team-4',
+    user_id: 'user-8',
+    role: 'member',
+    joined_at: '2024-02-05T00:00:00Z',
+  },
+  {
+    id: 'tm-9',
+    team_id: 'team-4',
+    user_id: 'user-9',
+    role: 'member',
+    joined_at: '2024-02-05T00:00:00Z',
+  },
+  {
+    id: 'tm-10',
+    team_id: 'team-5',
+    user_id: 'user-8',
+    role: 'team_leader',
+    joined_at: '2024-02-05T00:00:00Z',
+  },
+  {
+    id: 'tm-11',
+    team_id: 'team-5',
+    user_id: 'user-9',
+    role: 'member',
+    joined_at: '2024-02-05T00:00:00Z',
+  },
 ];
 
 // 더미 방 멤버 데이터
@@ -199,6 +297,30 @@ export const MOCK_ROOM_MEMBERS: RoomMember[] = [
     room_id: 'room-2',
     user_id: 'user-6',
     joined_at: '2024-02-01T00:00:00Z',
+  },
+  {
+    id: 'rm-8',
+    room_id: 'room-3',
+    user_id: 'user-10',
+    joined_at: '2024-02-05T00:00:00Z',
+  },
+  {
+    id: 'rm-9',
+    room_id: 'room-3',
+    user_id: 'user-7',
+    joined_at: '2024-02-05T00:00:00Z',
+  },
+  {
+    id: 'rm-10',
+    room_id: 'room-3',
+    user_id: 'user-8',
+    joined_at: '2024-02-05T00:00:00Z',
+  },
+  {
+    id: 'rm-11',
+    room_id: 'room-3',
+    user_id: 'user-9',
+    joined_at: '2024-02-05T00:00:00Z',
   },
 ];
 
@@ -287,6 +409,10 @@ export const MOCK_PASSWORDS: Record<string, string> = {
   'student1@goodlab.com': 'password123',
   'student2@goodlab.com': 'password123',
   'student3@goodlab.com': 'password123',
+  'student4@goodlab.com': 'password123',
+  'student5@goodlab.com': 'password123',
+  'student6@goodlab.com': 'password123',
+  'professor2@goodlab.com': 'password123',
 };
 
 // 더미 문서 데이터

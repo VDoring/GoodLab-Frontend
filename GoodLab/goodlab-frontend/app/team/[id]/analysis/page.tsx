@@ -24,6 +24,10 @@ import {
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
+  Area,
+  AreaChart,
 } from "recharts";
 import { useAnalysisStore, useTeamStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
@@ -143,6 +147,16 @@ export default function AnalysisPage() {
     name: member.user,
     value: member.commits + member.prs * 2,
   }));
+
+  // 시간에 따른 활동 추이 Mock 데이터 (주간 데이터)
+  const activityTrendData = [
+    { week: 'Week 1', commits: 15, prs: 2, pages: 3 },
+    { week: 'Week 2', commits: 22, prs: 4, pages: 5 },
+    { week: 'Week 3', commits: 28, prs: 6, pages: 8 },
+    { week: 'Week 4', commits: 35, prs: 8, pages: 12 },
+    { week: 'Week 5', commits: 42, prs: 10, pages: 15 },
+    { week: 'Week 6', commits: 48, prs: 12, pages: 18 },
+  ];
 
   const handleDownloadPDF = () => {
     // Generate report content in Markdown format
@@ -376,6 +390,46 @@ export default function AnalysisPage() {
                   <Bar dataKey="페이지" fill="#8b5cf6" />
                   <Bar dataKey="댓글" fill="#ec4899" />
                 </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Activity Trend Over Time */}
+        <Card>
+          <CardHeader>
+            <CardTitle>주간 활동 추이</CardTitle>
+            <CardDescription>
+              시간에 따른 팀의 GitHub 및 Notion 활동 변화
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={activityTrendData}>
+                  <defs>
+                    <linearGradient id="colorCommits" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorPRs" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorPages" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="week" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Area type="monotone" dataKey="commits" stroke="#3b82f6" fillOpacity={1} fill="url(#colorCommits)" name="커밋" />
+                  <Area type="monotone" dataKey="prs" stroke="#10b981" fillOpacity={1} fill="url(#colorPRs)" name="PR" />
+                  <Area type="monotone" dataKey="pages" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorPages)" name="Notion 페이지" />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
