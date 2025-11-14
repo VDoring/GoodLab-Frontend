@@ -23,15 +23,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Users, Crown, Trash2, Settings, Edit, Calendar } from "lucide-react";
+import { Plus, Users, Crown, Trash2, Settings, Edit, Calendar, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRoomStore, useTeamStore, useAuthStore } from "@/store";
-import { teamMemberDB, userDB } from "@/lib/mock-db";
+import { teamMemberDB, userDB, roomMemberDB } from "@/lib/mock-db";
 import { useToast } from "@/hooks/use-toast";
 import { useRequireAdmin } from "@/hooks";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const teamSchema = z.object({
   name: z.string().min(2, { message: "팀 이름은 최소 2자 이상이어야 합니다." }),
@@ -53,6 +54,8 @@ export default function RoomDetailPage() {
   const roomId = params.id as string;
   const [isCreateTeamDialogOpen, setIsCreateTeamDialogOpen] = useState(false);
   const [isEditRoomDialogOpen, setIsEditRoomDialogOpen] = useState(false);
+  const [isAddMemberDialogOpen, setIsAddMemberDialogOpen] = useState(false);
+  const [selectedTeamForAddMember, setSelectedTeamForAddMember] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const { hasPermission } = useRequireAdmin();
@@ -67,6 +70,7 @@ export default function RoomDetailPage() {
   const createTeam = useTeamStore((state) => state.createTeam);
   const deleteTeam = useTeamStore((state) => state.deleteTeam);
   const getTeamMembers = useTeamStore((state) => state.getTeamMembers);
+  const addMemberToTeam = useTeamStore((state) => state.addMemberToTeam);
 
   const room = rooms.find((r) => r.id === roomId);
 
@@ -238,6 +242,45 @@ export default function RoomDetailPage() {
         });
       }
     }
+  };
+
+  // 방 멤버 중 팀에 없는 사람들 가져오기
+  const getAvailableRoomMembers = (teamId: string) => {
+    const roomMembers = roomMemberDB.getByRoomId(roomId);
+    const teamMembers = teamMemberDB.getByTeamId(teamId);
+    const teamMemberIds = teamMembers.map(tm => tm.user_id);
+
+    return roomMembers
+      .filter(rm => !teamMemberIds.includes(rm.user_id))
+      .map(rm => userDB.getById(rm.user_id))
+      .filter((user): user is NonNullable<typeof user> => user !== null);
+  };
+
+  const handleOpenAddMember = (teamId: string) => {
+    setSelectedTeamForAddMember(teamId);
+    setIsAddMemberDialogOpen(true);
+  };
+
+  const handleAddMember = (userId: string) => {
+    if (!selectedTeamForAddMember) return;
+
+    addMemberToTeam(selectedTeamForAddMember, userId, 'member');
+
+    const user = userDB.getById(userId);
+    toast({
+      title: "팀원 추가 완료",
+      description: `${user?.name}님이 팀에 추가되었습니다.`,
+    });
+
+    fetchTeamsByRoom(roomId);
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
   };
 
   return (
@@ -450,8 +493,17 @@ export default function RoomDetailPage() {
                         )}
                       </CardTitle>
                       <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenAddMember(team.id)}
+                        >
+                          <UserPlus className="mr-1 h-4 w-4" />
+                          팀원 추가
+                        </Button>
                         <Link href={`/team/${team.id}`}>
                           <Button variant="outline" size="sm">
+                            <Settings className="mr-1 h-4 w-4" />
                             관리
                           </Button>
                         </Link>
@@ -509,6 +561,59 @@ export default function RoomDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Add Member Dialog */}
+      <Dialog open={isAddMemberDialogOpen} onOpenChange={setIsAddMemberDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>팀원 추가</DialogTitle>
+            <DialogDescription>
+              방에 참여한 사람 중 팀에 추가할 사람을 선택하세요
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto space-y-2 py-4">
+            {selectedTeamForAddMember && getAvailableRoomMembers(selectedTeamForAddMember).length > 0 ? (
+              getAvailableRoomMembers(selectedTeamForAddMember).map((member) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={member.avatar_url} alt={member.name} />
+                      <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-sm">{member.name}</p>
+                      <p className="text-xs text-muted-foreground">{member.email}</p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      handleAddMember(member.id);
+                      setIsAddMemberDialogOpen(false);
+                    }}
+                  >
+                    <UserPlus className="mr-1 h-4 w-4" />
+                    추가
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>추가할 수 있는 팀원이 없습니다.</p>
+                <p className="text-sm mt-2">모든 방 멤버가 이미 팀에 속해있습니다.</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setIsAddMemberDialogOpen(false)}>
+              닫기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }

@@ -151,6 +151,16 @@ export default function TeamDetailPage() {
   };
 
   const handleSetLeader = (userId: string) => {
+    // 권한 체크: 교수/슈퍼관리자만 가능
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      toast({
+        title: "권한 없음",
+        description: "팀장 지정은 교수만 가능합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const member = members.find((m) => m.id === userId);
     if (!member) return;
 
@@ -164,7 +174,40 @@ export default function TeamDetailPage() {
     }
   };
 
+  const handleRemoveLeader = () => {
+    // 권한 체크: 교수/슈퍼관리자만 가능
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      toast({
+        title: "권한 없음",
+        description: "팀장 해제는 교수만 가능합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!leader) return;
+
+    if (confirm(`${leader.name}님의 팀장 권한을 해제하시겠습니까?`)) {
+      changeTeamLeader(teamId, null);
+      toast({
+        title: "팀장 해제 완료",
+        description: `${leader.name}님의 팀장 권한이 해제되었습니다.`,
+      });
+      fetchTeam(teamId);
+    }
+  };
+
   const handleRemoveMember = (userId: string) => {
+    // 권한 체크: 교수/슈퍼관리자만 가능
+    if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      toast({
+        title: "권한 없음",
+        description: "팀원 방출은 교수만 가능합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const member = members.find((m) => m.id === userId);
     if (!member) return;
 
@@ -309,26 +352,38 @@ export default function TeamDetailPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      {!isLeader && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSetLeader(member.id)}
-                        >
-                          팀장 지정
-                        </Button>
-                      )}
-                      {!isLeader && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleRemoveMember(member.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    {/* 교수/슈퍼관리자만 팀장 지정/해제 및 팀원 방출 가능 */}
+                    {user && (user.role === 'admin' || user.role === 'super_admin') && (
+                      <div className="flex gap-2">
+                        {isLeader ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveLeader()}
+                          >
+                            <Crown className="mr-1 h-4 w-4 text-yellow-500" />
+                            팀장 해제
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSetLeader(member.id)}
+                            >
+                              팀장 지정
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleRemoveMember(member.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

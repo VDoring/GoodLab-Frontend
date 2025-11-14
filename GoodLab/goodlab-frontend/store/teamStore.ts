@@ -43,8 +43,8 @@ interface TeamState {
   // 팀원 목록 가져오기
   getTeamMembers: (teamId: string) => User[];
 
-  // 팀장 변경
-  changeTeamLeader: (teamId: string, newLeaderId: string) => void;
+  // 팀장 변경 (null이면 팀장 해제)
+  changeTeamLeader: (teamId: string, newLeaderId: string | null) => void;
 
   // 사용자의 팀 목록 가져오기
   getUserTeams: (userId: string) => Team[];
@@ -153,11 +153,11 @@ export const useTeamStore = create<TeamState>()(
         return users;
       },
 
-      changeTeamLeader: (teamId: string, newLeaderId: string) => {
+      changeTeamLeader: (teamId: string, newLeaderId: string | null) => {
         initializeMockDB();
 
         // 팀의 leader_id 업데이트
-        teamDB.update(teamId, { leader_id: newLeaderId });
+        teamDB.update(teamId, { leader_id: newLeaderId || undefined });
 
         // 모든 팀원을 일반 멤버로 변경
         const members = teamMemberDB.getByTeamId(teamId);
@@ -165,8 +165,10 @@ export const useTeamStore = create<TeamState>()(
           teamMemberDB.updateRole(teamId, member.user_id, 'member');
         });
 
-        // 새 팀장을 team_leader로 변경
-        teamMemberDB.updateRole(teamId, newLeaderId, 'team_leader');
+        // 새 팀장이 있으면 team_leader로 변경
+        if (newLeaderId) {
+          teamMemberDB.updateRole(teamId, newLeaderId, 'team_leader');
+        }
 
         // 스토어 업데이트
         const updated = teamDB.getById(teamId);
