@@ -13,10 +13,12 @@ import {
   ChevronRight,
   Shield,
   BookOpen,
+  Bell,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useAuthStore, useRoomStore, useTeamStore } from "@/store";
+import { useAuthStore, useRoomStore, useTeamStore, useNotificationStore } from "@/store";
 import { roomMemberDB, teamMemberDB } from "@/lib/mock-db";
 
 interface SidebarProps {
@@ -34,13 +36,15 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const allTeams = useTeamStore((state) => state.teams);
   const fetchRooms = useRoomStore((state) => state.fetchRooms);
   const fetchTeams = useTeamStore((state) => state.fetchTeams);
+  const { unreadCount, fetchNotifications } = useNotificationStore();
 
   useEffect(() => {
     if (user) {
       fetchRooms();
       fetchTeams();
+      fetchNotifications(user.id);
     }
-  }, [user, fetchRooms, fetchTeams]);
+  }, [user, fetchRooms, fetchTeams, fetchNotifications]);
 
   // 사용자가 속한 방만 필터링
   const userRoomIds = user ? roomMemberDB.getByUserId(user.id).map((rm) => rm.room_id) : [];
@@ -52,6 +56,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
   const navItems = [
     { href: "/dashboard", label: "대시보드", icon: Home },
+    { href: "/search", label: "검색", icon: Search },
+    { href: "/notifications", label: "알림", icon: Bell, badge: unreadCount },
     { href: "/documents", label: "문서", icon: FileText },
     { href: "/settings", label: "설정", icon: Settings },
   ];
@@ -94,11 +100,16 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                   <Link key={item.href} href={item.href}>
                     <Button
                       variant={isActive ? "secondary" : "ghost"}
-                      className="w-full justify-start"
+                      className="w-full justify-start relative"
                       onClick={onClose}
                     >
                       <Icon className="mr-2 h-4 w-4" />
                       {item.label}
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+                          {item.badge > 9 ? '9+' : item.badge}
+                        </span>
+                      )}
                     </Button>
                   </Link>
                 );

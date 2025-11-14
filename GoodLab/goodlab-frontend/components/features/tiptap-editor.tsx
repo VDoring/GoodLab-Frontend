@@ -94,6 +94,13 @@ export function TiptapEditor({
     }
   }, [content, editor]);
 
+  // Update editor editable state when prop changes
+  useEffect(() => {
+    if (editor && editor.isEditable !== editable) {
+      editor.setEditable(editable);
+    }
+  }, [editor, editable]);
+
   if (!editor) {
     return null;
   }

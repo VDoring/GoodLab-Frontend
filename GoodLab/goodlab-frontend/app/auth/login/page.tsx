@@ -133,11 +133,19 @@ function LoginForm() {
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "로그인 중..." : "로그인"}
             </Button>
-            <div className="text-center text-sm">
-              계정이 없으신가요?{" "}
-              <Link href="/auth/signup" className="text-primary hover:underline">
-                회원가입
+            <div className="flex flex-col space-y-2 text-center text-sm">
+              <Link
+                href="/auth/forgot-password"
+                className="text-primary hover:underline"
+              >
+                비밀번호를 잊으셨나요?
               </Link>
+              <div>
+                계정이 없으신가요?{" "}
+                <Link href="/auth/signup" className="text-primary hover:underline">
+                  회원가입
+                </Link>
+              </div>
             </div>
           </CardFooter>
         </form>

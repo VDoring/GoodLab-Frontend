@@ -120,3 +120,25 @@ export interface DocumentWithRelations extends Document {
   team?: Team;
   permissions?: DocumentPermission[];
 }
+
+// Notification Types
+export type NotificationType =
+  | 'team_invite'
+  | 'room_invite'
+  | 'analysis_complete'
+  | 'document_mention'
+  | 'team_leader_assigned'
+  | 'member_removed'
+  | 'system';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  link?: string; // 클릭 시 이동할 링크
+  read: boolean;
+  created_at: string;
+  data?: Record<string, any>; // 추가 데이터
+}

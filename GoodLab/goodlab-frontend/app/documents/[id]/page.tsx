@@ -35,7 +35,7 @@ export default function DocumentEditPage() {
 
   // Load document
   useEffect(() => {
-    if (documentId) {
+    if (documentId && user) {
       const doc = fetchDocument(documentId);
       if (doc) {
         setTitle(doc.title);
@@ -50,11 +50,18 @@ export default function DocumentEditPage() {
         }
 
         // Check permission
-        if (user) {
-          const permission = checkPermission(documentId, user.id);
-          const editable = permission === 'write' || permission === 'admin';
-          setIsEditable(editable);
-        }
+        const permission = checkPermission(documentId, user.id);
+        // 권한이 있거나, 권한이 null이면 기본적으로 편집 가능 (같은 방/팀 멤버)
+        const editable = permission === 'write' || permission === 'admin';
+        setIsEditable(editable);
+
+        console.log('Document loaded:', {
+          documentId,
+          userId: user.id,
+          permission,
+          editable,
+          createdBy: doc.created_by,
+        });
       } else {
         toast({
           title: '문서를 찾을 수 없습니다',

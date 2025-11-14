@@ -3,3 +3,4 @@ export { useRoomStore } from './roomStore';
 export { useTeamStore } from './teamStore';
 export { useAnalysisStore } from './analysisStore';
 export { useDocumentStore } from './documentStore';
+export { useNotificationStore } from './notificationStore';

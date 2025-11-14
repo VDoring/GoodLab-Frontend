@@ -48,6 +48,7 @@ export default function ProfilePage() {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState(user?.avatar_url || "");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Sync name with user
   useEffect(() => {
@@ -199,6 +200,43 @@ export default function ProfilePage() {
   const generateRandomAvatar = () => {
     const seed = Math.random().toString(36).substring(7);
     setImageUrl(`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`);
+    setSelectedFile(null);
+  };
+
+  // Handle file upload (convert to Base64)
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "오류",
+        description: "이미지 파일만 업로드 가능합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "오류",
+        description: "파일 크기는 2MB 이하여야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Convert to Base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setImageUrl(base64String);
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -434,14 +472,45 @@ export default function ProfilePage() {
                       </Avatar>
                     </div>
 
+                    {/* File Upload */}
+                    <div>
+                      <Label htmlFor="file-upload">파일 선택</Label>
+                      <Input
+                        id="file-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        JPG, PNG, GIF (최대 2MB)
+                      </p>
+                    </div>
+
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">
+                          또는
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* URL Input */}
                     <div>
                       <Label htmlFor="image-url">이미지 URL</Label>
                       <Input
                         id="image-url"
                         type="url"
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
+                        value={imageUrl.startsWith('data:') ? '' : imageUrl}
+                        onChange={(e) => {
+                          setImageUrl(e.target.value);
+                          setSelectedFile(null);
+                        }}
                         placeholder="https://example.com/image.jpg"
+                        disabled={!!selectedFile}
                       />
                     </div>
 
