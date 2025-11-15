@@ -22,7 +22,7 @@ interface TeamState {
   createTeam: (data: {
     room_id: string;
     name: string;
-    leader_id?: string;
+    leader_id?: string | null;
   }) => Team;
 
   // 팀 수정
@@ -81,7 +81,13 @@ export const useTeamStore = create<TeamState>()(
 
       createTeam: (data) => {
         initializeMockDB();
-        const newTeam = teamDB.create(data);
+        // undefined를 null로 변환
+        const teamData = {
+          room_id: data.room_id,
+          name: data.name,
+          leader_id: data.leader_id ?? null,
+        };
+        const newTeam = teamDB.create(teamData);
 
         // 팀장이 지정된 경우 팀 멤버로 추가
         if (data.leader_id) {
@@ -141,7 +147,28 @@ export const useTeamStore = create<TeamState>()(
 
       removeMemberFromTeam: (teamId: string, userId: string) => {
         initializeMockDB();
+
+        // 팀 정보 가져오기
+        const team = teamDB.getById(teamId);
+
+        // 만약 제거하려는 사람이 팀장이면 leader_id를 null로 업데이트
+        if (team && team.leader_id === userId) {
+          teamDB.update(teamId, { leader_id: null });
+        }
+
+        // 팀 멤버에서 제거
         teamMemberDB.remove(teamId, userId);
+
+        // 스토어 업데이트
+        const updatedTeam = teamDB.getById(teamId);
+        if (updatedTeam) {
+          set((state) => ({
+            teams: state.teams.map((t) =>
+              t.id === teamId ? updatedTeam : t
+            ),
+            currentTeam: state.currentTeam?.id === teamId ? updatedTeam : state.currentTeam,
+          }));
+        }
       },
 
       getTeamMembers: (teamId: string) => {
@@ -176,7 +203,7 @@ export const useTeamStore = create<TeamState>()(
         }
 
         // 팀의 leader_id 업데이트
-        teamDB.update(teamId, { leader_id: newLeaderId || undefined });
+        teamDB.update(teamId, { leader_id: newLeaderId });
 
         // 스토어 업데이트
         const updated = teamDB.getById(teamId);

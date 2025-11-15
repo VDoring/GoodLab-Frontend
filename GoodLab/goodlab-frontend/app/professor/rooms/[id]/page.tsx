@@ -41,8 +41,17 @@ const teamSchema = z.object({
 const roomSchema = z.object({
   title: z.string().min(2, { message: "방 제목은 최소 2자 이상이어야 합니다." }),
   description: z.string().optional(),
-  start_date: z.string().min(1, { message: "시작일을 선택해주세요." }),
-  end_date: z.string().min(1, { message: "종료일을 선택해주세요." }),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+}).refine((data) => {
+  // 날짜 검증: start_date와 end_date가 모두 있을 때만 검증
+  if (data.start_date && data.end_date) {
+    return new Date(data.start_date) <= new Date(data.end_date);
+  }
+  return true;
+}, {
+  message: "종료일은 시작일보다 늦어야 합니다.",
+  path: ["end_date"],
 });
 
 type TeamFormData = z.infer<typeof teamSchema>;

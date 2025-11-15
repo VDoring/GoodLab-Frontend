@@ -75,6 +75,46 @@ export default function AnalysisPage() {
     );
   }
 
+  async function handleStartAnalysis() {
+    // team이 없으면 리턴
+    if (!team) {
+      toast({
+        title: "팀 정보 없음",
+        description: "팀 정보를 찾을 수 없습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // GitHub와 Notion URL이 등록되어 있는지 확인
+    if (!team.github_url && !team.notion_url) {
+      toast({
+        title: "연동 설정 필요",
+        description: "분석을 시작하려면 먼저 GitHub 또는 Notion을 연동해야 합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAnalyzing(true);
+    try {
+      await startAnalysis(teamId);
+      toast({
+        title: "분석 완료",
+        description: "팀 활동 분석이 성공적으로 완료되었습니다.",
+      });
+    } catch (error) {
+      console.error("Analysis error:", error);
+      toast({
+        title: "분석 실패",
+        description: "분석 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  }
+
   // 분석 데이터가 없는 경우
   if (!currentAnalysis || analysisStatus === 'pending') {
     return (
@@ -111,26 +151,6 @@ export default function AnalysisPage() {
     notion: currentAnalysis.notion_data || [],
     ai_insights: currentAnalysis.ai_insights || "",
   };
-
-  async function handleStartAnalysis() {
-    setIsAnalyzing(true);
-    try {
-      await startAnalysis(teamId);
-      toast({
-        title: "분석 완료",
-        description: "팀 활동 분석이 성공적으로 완료되었습니다.",
-      });
-    } catch (error) {
-      console.error("Analysis error:", error);
-      toast({
-        title: "분석 실패",
-        description: "분석 중 오류가 발생했습니다.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  }
 
   const githubChartData = analysisData.github.map((member) => ({
     name: member.user,

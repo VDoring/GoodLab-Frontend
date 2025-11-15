@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useRequireAuth } from "@/hooks";
 import { useRoomStore, useTeamStore, useDocumentStore, useAnalysisStore } from "@/store";
 import { Folders, Users, FileText, LineChart, Clock } from "lucide-react";
-import type { AnalysisResult } from "@/types";
+import type { AnalysisResult, Room, Team } from "@/types";
 
 interface Activity {
   id: string;
@@ -19,14 +19,53 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
 
   // Get data from stores
-  const { rooms, getUserRooms } = useRoomStore();
-  const { teams, getUserTeams } = useTeamStore();
+  const { getUserRooms } = useRoomStore();
+  const { getUserTeams } = useTeamStore();
   const { documents, fetchDocuments } = useDocumentStore();
+
+  // User-specific data
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
 
   // For analysis, we'll fetch per team
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
 
-  const generateActivities = () => {
+  const getTimeAgo = (date: string) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diffMs = now.getTime() - past.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffDays > 0) return `${diffDays}일 전`;
+    if (diffHours > 0) return `${diffHours}시간 전`;
+    if (diffMins > 0) return `${diffMins}분 전`;
+    return '방금 전';
+  };
+
+  useEffect(() => {
+    if (user) {
+      // Fetch user-specific data
+      const userRooms = getUserRooms(user.id);
+      const userTeams = getUserTeams(user.id);
+      setRooms(userRooms);
+      setTeams(userTeams);
+      fetchDocuments();
+
+      // Fetch analysis results for all teams
+      if (typeof window !== 'undefined') {
+        const analysisDB = localStorage.getItem('goodlab_analysis_results');
+        if (analysisDB) {
+          const allAnalyses = JSON.parse(analysisDB);
+          setAnalysisResults(allAnalyses);
+        }
+      }
+    }
+  }, [user, getUserRooms, getUserTeams, fetchDocuments]);
+
+  // Generate activities when data changes
+  useEffect(() => {
     if (!user) return;
 
     const recentActivities: Activity[] = [];
@@ -70,50 +109,11 @@ export default function DashboardPage() {
     });
 
     setActivities(recentActivities.slice(0, 5));
-  };
-
-  useEffect(() => {
-    if (user) {
-      // Fetch all data
-      getUserRooms(user.id);
-      getUserTeams(user.id);
-      fetchDocuments();
-
-      // Fetch analysis results for all teams
-      if (typeof window !== 'undefined') {
-        const analysisDB = localStorage.getItem('goodlab_analysis_results');
-        if (analysisDB) {
-          const allAnalyses = JSON.parse(analysisDB);
-          setAnalysisResults(allAnalyses);
-        }
-      }
-    }
-  }, [user, getUserRooms, getUserTeams, fetchDocuments]);
-
-  // Generate activities when data changes
-  useEffect(() => {
-    if (user && documents.length > 0) {
-      generateActivities();
-    }
   }, [user, documents, analysisResults, rooms, teams]);
 
   if (!isAuthenticated || !user) {
     return null;
   }
-
-  const getTimeAgo = (date: string) => {
-    const now = new Date();
-    const past = new Date(date);
-    const diffMs = now.getTime() - past.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) return `${diffDays}일 전`;
-    if (diffHours > 0) return `${diffHours}시간 전`;
-    if (diffMins > 0) return `${diffMins}분 전`;
-    return '방금 전';
-  };
 
   // Calculate statistics
   const userRooms = rooms.length;

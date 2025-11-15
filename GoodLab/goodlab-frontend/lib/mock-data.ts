@@ -168,6 +168,8 @@ export const MOCK_TEAMS: Team[] = [
     room_id: 'room-3',
     name: '웹팀 2',
     leader_id: 'user-8',
+    github_url: undefined,
+    notion_url: undefined,
     created_at: '2024-02-05T00:00:00Z',
     updated_at: '2024-02-05T00:00:00Z',
   },

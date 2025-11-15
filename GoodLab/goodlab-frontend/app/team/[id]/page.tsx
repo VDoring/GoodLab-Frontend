@@ -231,14 +231,23 @@ export default function TeamDetailPage() {
     const member = members.find((m) => m.id === userId);
     if (!member) return;
 
-    if (confirm(`정말 ${member.name}님을 팀에서 방출하시겠습니까?`)) {
-      removeMemberFromTeam(teamId, userId);
-      toast({
-        title: "팀원 방출 완료",
-        description: `${member.name}님이 팀에서 제거되었습니다.`,
-      });
-      fetchTeam(teamId);
+    // 팀장인 경우 경고
+    if (leader?.id === userId) {
+      if (!confirm(`${member.name}님은 현재 팀장입니다. 팀장을 방출하면 팀장이 자동으로 해제됩니다. 계속하시겠습니까?`)) {
+        return;
+      }
+    } else {
+      if (!confirm(`정말 ${member.name}님을 팀에서 방출하시겠습니까?`)) {
+        return;
+      }
     }
+
+    removeMemberFromTeam(teamId, userId);
+    toast({
+      title: "팀원 방출 완료",
+      description: `${member.name}님이 팀에서 제거되었습니다.`,
+    });
+    fetchTeam(teamId);
   };
 
   const handleStartAnalysis = () => {

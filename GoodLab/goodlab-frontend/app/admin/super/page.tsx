@@ -261,7 +261,11 @@ export default function SuperAdminPage() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    {user.role === "admin" ? (
+                    {user.role === "super_admin" ? (
+                      <div className="text-sm text-muted-foreground px-4 py-2">
+                        슈퍼관리자
+                      </div>
+                    ) : user.role === "admin" ? (
                       <Button
                         variant="outline"
                         onClick={() => handleRevokeAdmin(user)}

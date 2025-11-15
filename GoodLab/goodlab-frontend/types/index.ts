@@ -35,7 +35,7 @@ export interface Team {
   id: string;
   room_id: string;
   name: string;
-  leader_id?: string;
+  leader_id: string | null;
   github_url?: string;
   notion_url?: string;
   created_at: string;

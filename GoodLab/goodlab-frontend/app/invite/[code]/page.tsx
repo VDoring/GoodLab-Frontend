@@ -23,40 +23,40 @@ export default function InvitePage() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
+    const checkInviteCode = () => {
+      // 초대 코드로 방 찾기
+      const room = roomDB.getByInviteCode(code);
+
+      if (!room) {
+        setStatus('invalid');
+        return;
+      }
+
+      setRoomInfo({
+        id: room.id,
+        title: room.title,
+        description: room.description,
+      });
+
+      // 사용자가 로그인하지 않은 경우
+      if (!user) {
+        setStatus('valid');
+        return;
+      }
+
+      // 이미 참여 중인지 확인
+      const members = roomMemberDB.getByRoomId(room.id);
+      const alreadyJoined = members.some((m) => m.user_id === user.id);
+
+      if (alreadyJoined) {
+        setStatus('already_joined');
+      } else {
+        setStatus('valid');
+      }
+    };
+
     checkInviteCode();
   }, [code, user]);
-
-  const checkInviteCode = () => {
-    // 초대 코드로 방 찾기
-    const room = roomDB.getByInviteCode(code);
-
-    if (!room) {
-      setStatus('invalid');
-      return;
-    }
-
-    setRoomInfo({
-      id: room.id,
-      title: room.title,
-      description: room.description,
-    });
-
-    // 사용자가 로그인하지 않은 경우
-    if (!user) {
-      setStatus('valid');
-      return;
-    }
-
-    // 이미 참여 중인지 확인
-    const members = roomMemberDB.getByRoomId(room.id);
-    const alreadyJoined = members.some((m) => m.user_id === user.id);
-
-    if (alreadyJoined) {
-      setStatus('already_joined');
-    } else {
-      setStatus('valid');
-    }
-  };
 
   const handleJoinRoom = () => {
     if (!user || !roomInfo) {
