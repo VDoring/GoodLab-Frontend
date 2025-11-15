@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useAuthStore, useDocumentStore, useRoomStore, useTeamStore } from '@/store';
 import { ArrowLeft, Save, Lock } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useAuth';
-import type { TiptapContent } from '@/types';
+import type { TiptapContent, Room, Team } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DocumentEditPage() {
@@ -30,8 +30,8 @@ export default function DocumentEditPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  const [room, setRoom] = useState<any>(null);
-  const [team, setTeam] = useState<any>(null);
+  const [room, setRoom] = useState<Room | null>(null);
+  const [team, setTeam] = useState<Team | null>(null);
 
   // Load document
   useEffect(() => {
@@ -54,14 +54,6 @@ export default function DocumentEditPage() {
         // 권한이 있거나, 권한이 null이면 기본적으로 편집 가능 (같은 방/팀 멤버)
         const editable = permission === 'write' || permission === 'admin';
         setIsEditable(editable);
-
-        console.log('Document loaded:', {
-          documentId,
-          userId: user.id,
-          permission,
-          editable,
-          createdBy: doc.created_by,
-        });
       } else {
         toast({
           title: '문서를 찾을 수 없습니다',
@@ -81,14 +73,14 @@ export default function DocumentEditPage() {
 
   // Handle save
   const handleSave = useCallback(async () => {
-    if (!currentDocument || !user) return;
+    if (!currentDocument || !user || !content) return;
 
     setIsSaving(true);
 
     try {
       const success = updateDocument(currentDocument.id, {
         title,
-        content: content!,
+        content,
         last_edited_by: user.id,
       });
 

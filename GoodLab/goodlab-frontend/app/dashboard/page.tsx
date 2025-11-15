@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useRequireAuth } from "@/hooks";
 import { useRoomStore, useTeamStore, useDocumentStore, useAnalysisStore } from "@/store";
 import { Folders, Users, FileText, LineChart, Clock } from "lucide-react";
+import type { AnalysisResult } from "@/types";
 
 interface Activity {
   id: string;
@@ -23,7 +24,7 @@ export default function DashboardPage() {
   const { documents, fetchDocuments } = useDocumentStore();
 
   // For analysis, we'll fetch per team
-  const [analysisResults, setAnalysisResults] = useState<any[]>([]);
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
 
   const generateActivities = () => {
     if (!user) return;
@@ -125,8 +126,8 @@ export default function DashboardPage() {
   const totalCommits = analysisResults
     .filter(a => a.status === 'completed' && a.github_data)
     .reduce((sum, a) => {
-      if (a.github_data?.team_stats) {
-        return sum + (a.github_data.team_stats.total_commits || 0);
+      if (a.github_data && Array.isArray(a.github_data)) {
+        return sum + a.github_data.reduce((acc, member) => acc + (member.commits || 0), 0);
       }
       return sum;
     }, 0);
@@ -134,8 +135,8 @@ export default function DashboardPage() {
   const totalNotionPages = analysisResults
     .filter(a => a.status === 'completed' && a.notion_data)
     .reduce((sum, a) => {
-      if (a.notion_data?.team_stats) {
-        return sum + (a.notion_data.team_stats.total_pages || 0);
+      if (a.notion_data && Array.isArray(a.notion_data)) {
+        return sum + a.notion_data.reduce((acc, member) => acc + (member.pages || 0), 0);
       }
       return sum;
     }, 0);
@@ -143,8 +144,8 @@ export default function DashboardPage() {
   const totalPRs = analysisResults
     .filter(a => a.status === 'completed' && a.github_data)
     .reduce((sum, a) => {
-      if (a.github_data?.team_stats) {
-        return sum + (a.github_data.team_stats.total_prs || 0);
+      if (a.github_data && Array.isArray(a.github_data)) {
+        return sum + a.github_data.reduce((acc, member) => acc + (member.prs || 0), 0);
       }
       return sum;
     }, 0);

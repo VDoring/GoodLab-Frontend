@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Document, DocumentPermission, DocumentPermissionLevel, TiptapContent } from '@/types';
+import { roomMemberDB, teamMemberDB } from '@/lib/mock-db';
 
 // Helper functions to access localStorage
 const getDocumentsDB = (): Document[] => {
@@ -222,13 +223,32 @@ export const useDocumentStore = create<DocumentState>()(
         // 생성자는 admin 권한
         if (document.created_by === userId) return 'admin';
 
-        // 권한 DB 확인
+        // 명시적 권한 DB 확인
         const permissions = getPermissionsDB();
         const permission = permissions.find(
           p => p.document_id === documentId && p.user_id === userId
         );
+        if (permission) return permission.permission;
 
-        return permission ? permission.permission : null;
+        // 방/팀 멤버십 확인
+        // 방 멤버인지 확인
+        const isRoomMember = roomMemberDB.getByRoomId(document.room_id).some(
+          member => member.user_id === userId
+        );
+        if (!isRoomMember) return null; // 방 멤버가 아니면 접근 불가
+
+        // 팀 문서인 경우
+        if (document.team_id) {
+          // 팀 멤버인지 확인
+          const isTeamMember = teamMemberDB.getByTeamId(document.team_id).some(
+            member => member.user_id === userId
+          );
+          // 팀 멤버면 write 권한, 아니면 접근 불가
+          return isTeamMember ? 'write' : null;
+        }
+
+        // 방 문서 (team_id 없음)인 경우 - 방 멤버면 read 권한
+        return 'read';
       },
 
       addPermission: (documentId: string, userId: string, permission: DocumentPermissionLevel) => {

@@ -31,6 +31,7 @@ import { useRoomStore } from "@/store";
 import { useAuthStore } from "@/store";
 import { roomMemberDB, teamDB } from "@/lib/mock-db";
 import { useRequireAdmin } from "@/hooks";
+import { useToast } from "@/hooks/use-toast";
 
 const roomSchema = z.object({
   title: z.string().min(2, { message: "방 제목은 최소 2자 이상이어야 합니다." }),
@@ -44,6 +45,7 @@ type RoomFormData = z.infer<typeof roomSchema>;
 export default function RoomsPage() {
   // 관리자 권한 체크
   const { hasPermission } = useRequireAdmin();
+  const { toast } = useToast();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,10 +90,17 @@ export default function RoomsPage() {
     const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      alert("링크가 복사되었습니다!");
+      toast({
+        title: "링크가 복사되었습니다!",
+        description: "초대 링크를 클립보드에 복사했습니다.",
+      });
     } catch (error) {
       console.error("Failed to copy:", error);
-      alert("링크 복사에 실패했습니다.");
+      toast({
+        title: "복사 실패",
+        description: "링크 복사에 실패했습니다.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -114,13 +123,20 @@ export default function RoomsPage() {
         created_by: user.id,
       });
 
-      alert("방이 성공적으로 생성되었습니다!");
+      toast({
+        title: "방이 생성되었습니다!",
+        description: "새로운 방이 성공적으로 생성되었습니다.",
+      });
       setIsCreateDialogOpen(false);
       reset();
       fetchRooms();
     } catch (error) {
       console.error("Room creation error:", error);
-      alert("방 생성에 실패했습니다.");
+      toast({
+        title: "생성 실패",
+        description: "방 생성에 실패했습니다.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

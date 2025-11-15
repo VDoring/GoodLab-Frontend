@@ -79,6 +79,10 @@ export default function TeamDetailPage() {
   const members = getTeamMembers(teamId);
   const leader = team?.leader_id ? userDB.getById(team.leader_id) : null;
 
+  // 팀 멤버인지 확인
+  const isTeamMember = user ? members.some(m => m.id === user.id) : false;
+  const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchTeam(teamId);
@@ -95,6 +99,22 @@ export default function TeamDetailPage() {
       <MainLayout>
         <div className="flex items-center justify-center h-96">
           <p className="text-muted-foreground">팀을 찾을 수 없습니다.</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  // 팀 멤버가 아니고 관리자도 아니면 접근 불가
+  if (!isTeamMember && !isAdmin) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-4">이 팀에 접근 권한이 없습니다.</p>
+            <Button onClick={() => router.push('/dashboard')}>
+              대시보드로 돌아가기
+            </Button>
+          </div>
         </div>
       </MainLayout>
     );

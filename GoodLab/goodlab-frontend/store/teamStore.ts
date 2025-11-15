@@ -156,9 +156,6 @@ export const useTeamStore = create<TeamState>()(
       changeTeamLeader: (teamId: string, newLeaderId: string | null) => {
         initializeMockDB();
 
-        // 팀의 leader_id 업데이트
-        teamDB.update(teamId, { leader_id: newLeaderId || undefined });
-
         // 모든 팀원을 일반 멤버로 변경
         const members = teamMemberDB.getByTeamId(teamId);
         members.forEach((member) => {
@@ -167,8 +164,19 @@ export const useTeamStore = create<TeamState>()(
 
         // 새 팀장이 있으면 team_leader로 변경
         if (newLeaderId) {
-          teamMemberDB.updateRole(teamId, newLeaderId, 'team_leader');
+          // 팀장이 팀 멤버인지 확인
+          const isMember = members.some(m => m.user_id === newLeaderId);
+          if (!isMember) {
+            // 팀 멤버가 아니면 먼저 추가
+            teamMemberDB.add(teamId, newLeaderId, 'team_leader');
+          } else {
+            // 이미 멤버면 role만 업데이트
+            teamMemberDB.updateRole(teamId, newLeaderId, 'team_leader');
+          }
         }
+
+        // 팀의 leader_id 업데이트
+        teamDB.update(teamId, { leader_id: newLeaderId || undefined });
 
         // 스토어 업데이트
         const updated = teamDB.getById(teamId);
@@ -185,12 +193,12 @@ export const useTeamStore = create<TeamState>()(
       getUserTeams: (userId: string) => {
         initializeMockDB();
         const teamMembers = teamMemberDB.getByUserId(userId);
-        const teams = teamMembers
+        const userTeams = teamMembers
           .map((tm) => teamDB.getById(tm.team_id))
           .filter((team): team is Team => team !== null);
 
-        set({ teams });
-        return teams;
+        // State를 덮어쓰지 않고 단순히 필터링된 결과만 반환
+        return userTeams;
       },
     }),
     {

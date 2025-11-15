@@ -122,12 +122,12 @@ export const useRoomStore = create<RoomState>()(
       getUserRooms: (userId: string) => {
         initializeMockDB();
         const roomMembers = roomMemberDB.getByUserId(userId);
-        const rooms = roomMembers
+        const userRooms = roomMembers
           .map((rm) => roomDB.getById(rm.room_id))
           .filter((room): room is Room => room !== null);
 
-        set({ rooms });
-        return rooms;
+        // State를 덮어쓰지 않고 단순히 필터링된 결과만 반환
+        return userRooms;
       },
 
       addMemberToRoom: (roomId: string, userId: string) => {

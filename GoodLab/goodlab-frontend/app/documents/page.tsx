@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuthStore, useRoomStore, useTeamStore, useDocumentStore } from '@/store';
 import { FileText, Plus, Trash2, FolderOpen, Users } from 'lucide-react';
 import { useRequireAuth } from '@/hooks/useAuth';
-import type { Document } from '@/types';
+import type { Document, Room, Team } from '@/types';
 
 export default function DocumentsPage() {
   useRequireAuth();
@@ -28,7 +28,7 @@ export default function DocumentsPage() {
   const [selectedTeamId, setSelectedTeamId] = useState<string>('__no_team__');
 
   const [userDocuments, setUserDocuments] = useState<Document[]>([]);
-  const [userRooms, setUserRooms] = useState<any[]>([]);
+  const [userRooms, setUserRooms] = useState<Room[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -74,7 +74,7 @@ export default function DocumentsPage() {
     }
   };
 
-  const roomTeamsMap = teams.reduce((acc: Record<string, any[]>, team) => {
+  const roomTeamsMap = teams.reduce((acc: Record<string, Team[]>, team) => {
     if (!acc[team.room_id]) {
       acc[team.room_id] = [];
     }

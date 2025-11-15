@@ -46,8 +46,6 @@ export function initializeMockDB() {
   localStorage.setItem(KEYS.DOCUMENT_PERMISSIONS, JSON.stringify(MOCK_DOCUMENT_PERMISSIONS));
   localStorage.setItem(KEYS.PERMISSION_HISTORY, JSON.stringify([]));
   localStorage.setItem(KEYS.INITIALIZED, 'true');
-
-  console.log('✅ Mock DB initialized');
 }
 
 // 데이터베이스 리셋
@@ -56,7 +54,6 @@ export function resetMockDB() {
 
   Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
   initializeMockDB();
-  console.log('🔄 Mock DB reset');
 }
 
 // ========== User CRUD ==========
@@ -184,6 +181,17 @@ export const roomDB = {
     const filtered = rooms.filter((r) => r.id !== id);
     if (filtered.length === rooms.length) return false;
 
+    // Cascade 삭제: 관련 데이터 모두 삭제
+    // 1. 방의 모든 팀 삭제 (팀 삭제 시 팀 멤버도 함께 삭제됨)
+    const teams = teamDB.getByRoomId(id);
+    teams.forEach((team) => teamDB.delete(team.id));
+
+    // 2. 방 멤버 삭제
+    const roomMembers = roomMemberDB.getAll();
+    const filteredMembers = roomMembers.filter((rm) => rm.room_id !== id);
+    localStorage.setItem(KEYS.ROOM_MEMBERS, JSON.stringify(filteredMembers));
+
+    // 3. 방 삭제
     localStorage.setItem(KEYS.ROOMS, JSON.stringify(filtered));
     return true;
   },
@@ -207,6 +215,15 @@ export const roomMemberDB = {
 
   add: (roomId: string, userId: string): RoomMember => {
     const members = roomMemberDB.getAll();
+
+    // 중복 체크
+    const existing = members.find(
+      (m) => m.room_id === roomId && m.user_id === userId
+    );
+    if (existing) {
+      return existing; // 이미 존재하면 기존 멤버 반환
+    }
+
     const newMember: RoomMember = {
       id: `rm-${Date.now()}`,
       room_id: roomId,
@@ -279,6 +296,12 @@ export const teamDB = {
     const filtered = teams.filter((t) => t.id !== id);
     if (filtered.length === teams.length) return false;
 
+    // Cascade 삭제: 팀 멤버도 함께 삭제
+    const teamMembers = teamMemberDB.getAll();
+    const filteredMembers = teamMembers.filter((tm) => tm.team_id !== id);
+    localStorage.setItem(KEYS.TEAM_MEMBERS, JSON.stringify(filteredMembers));
+
+    // 팀 삭제
     localStorage.setItem(KEYS.TEAMS, JSON.stringify(filtered));
     return true;
   },
@@ -302,6 +325,18 @@ export const teamMemberDB = {
 
   add: (teamId: string, userId: string, role: 'team_leader' | 'member' = 'member'): TeamMember => {
     const members = teamMemberDB.getAll();
+
+    // 중복 체크
+    const existing = members.find(
+      (m) => m.team_id === teamId && m.user_id === userId
+    );
+    if (existing) {
+      // 이미 존재하면 role만 업데이트
+      existing.role = role;
+      localStorage.setItem(KEYS.TEAM_MEMBERS, JSON.stringify(members));
+      return existing;
+    }
+
     const newMember: TeamMember = {
       id: `tm-${Date.now()}`,
       team_id: teamId,
