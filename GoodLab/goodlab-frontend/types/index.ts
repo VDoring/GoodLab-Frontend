@@ -142,3 +142,19 @@ export interface Notification {
   created_at: string;
   data?: Record<string, any>; // 추가 데이터
 }
+
+// Permission Change History Types
+export type PermissionChangeAction = 'grant_admin' | 'revoke_admin';
+
+export interface PermissionChangeHistory {
+  id: string;
+  target_user_id: string; // 권한이 변경된 사용자
+  target_user_name: string; // 권한이 변경된 사용자 이름
+  target_user_email: string; // 권한이 변경된 사용자 이메일
+  changed_by: string; // 권한을 변경한 슈퍼관리자 ID
+  changed_by_name: string; // 권한을 변경한 슈퍼관리자 이름
+  action: PermissionChangeAction; // 수행한 액션
+  old_role: UserRole; // 이전 권한
+  new_role: UserRole; // 새 권한
+  created_at: string; // 변경 일시
+}

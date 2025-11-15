@@ -21,8 +21,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Shield, ShieldOff, Search, Users, UserCog } from "lucide-react";
-import type { User, UserRole } from "@/types";
-import { userDB, initializeMockDB } from "@/lib/mock-db";
+import type { User, UserRole, PermissionChangeHistory } from "@/types";
+import { userDB, initializeMockDB, permissionChangeHistoryDB } from "@/lib/mock-db";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/store";
 import { useRouter } from "next/navigation";
@@ -36,6 +36,7 @@ export default function SuperAdminPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [actionType, setActionType] = useState<"grant" | "revoke" | null>(null);
+  const [permissionHistory, setPermissionHistory] = useState<PermissionChangeHistory[]>([]);
 
   useEffect(() => {
     // 슈퍼관리자 권한 체크
@@ -51,6 +52,10 @@ export default function SuperAdminPage() {
     initializeMockDB();
     const allUsers = userDB.getAll();
     setUsers(allUsers);
+
+    // 권한 변경 이력도 로드
+    const history = permissionChangeHistoryDB.getRecent(20);
+    setPermissionHistory(history);
   };
 
   if (!user || user.role !== 'super_admin') {
@@ -115,12 +120,25 @@ export default function SuperAdminPage() {
   };
 
   const handleConfirmAction = () => {
-    if (!selectedUser || !actionType) return;
+    if (!selectedUser || !actionType || !user) return;
 
+    const oldRole = selectedUser.role;
     const newRole: UserRole = actionType === "grant" ? "admin" : "user";
     const success = userDB.update(selectedUser.id, { role: newRole });
 
     if (success) {
+      // 권한 변경 이력 기록
+      permissionChangeHistoryDB.create({
+        target_user_id: selectedUser.id,
+        target_user_name: selectedUser.name,
+        target_user_email: selectedUser.email,
+        changed_by: user.id,
+        changed_by_name: user.name,
+        action: actionType === "grant" ? "grant_admin" : "revoke_admin",
+        old_role: oldRole,
+        new_role: newRole,
+      });
+
       toast({
         title: actionType === "grant" ? "교수 권한 부여 완료" : "교수 권한 회수 완료",
         description: `${selectedUser.name}님의 권한이 변경되었습니다.`,
@@ -267,6 +285,60 @@ export default function SuperAdminPage() {
                 </div>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Permission Change History */}
+        <Card>
+          <CardHeader>
+            <CardTitle>권한 변경 이력</CardTitle>
+            <CardDescription>
+              최근 20개의 권한 변경 기록
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {permissionHistory.length > 0 ? (
+              <div className="space-y-3">
+                {permissionHistory.map((history) => (
+                  <div
+                    key={history.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        {history.action === 'grant_admin' ? (
+                          <Shield className="h-4 w-4 text-blue-600" />
+                        ) : (
+                          <ShieldOff className="h-4 w-4 text-gray-600" />
+                        )}
+                        <span className="font-medium">
+                          {history.target_user_name}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          ({history.target_user_email})
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {history.action === 'grant_admin'
+                          ? `교수 권한 부여`
+                          : `교수 권한 회수`}
+                        {' • '}
+                        <span className="font-medium">{getRoleLabel(history.old_role)}</span>
+                        {' → '}
+                        <span className="font-medium">{getRoleLabel(history.new_role)}</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        변경자: {history.changed_by_name} • {new Date(history.created_at).toLocaleString('ko-KR')}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                권한 변경 이력이 없습니다.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

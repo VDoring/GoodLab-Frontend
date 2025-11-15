@@ -32,6 +32,8 @@ import {
 import { useAnalysisStore, useTeamStore } from "@/store";
 import { useToast } from "@/hooks/use-toast";
 import { useRequireAuth } from "@/hooks";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
@@ -158,31 +160,68 @@ export default function AnalysisPage() {
     { week: 'Week 6', commits: 48, prs: 12, pages: 18 },
   ];
 
-  const handleDownloadPDF = () => {
-    // Generate report content in Markdown format
-    const reportContent = generateReportMarkdown(analysisData);
+  const handleDownloadPDF = async () => {
+    try {
+      toast({
+        title: "PDF 생성 중...",
+        description: "잠시만 기다려주세요.",
+      });
 
-    // Create a Blob
-    const blob = new Blob([reportContent], { type: 'text/markdown;charset=utf-8' });
+      // PDF 생성을 위한 임시 div 생성
+      const reportElement = document.getElementById('analysis-report');
+      if (!reportElement) {
+        toast({
+          title: "PDF 생성 실패",
+          description: "리포트 요소를 찾을 수 없습니다.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Create download link
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${team.name}_분석결과_${new Date().toISOString().split('T')[0]}.md`;
+      // html2canvas로 캡처
+      const canvas = await html2canvas(reportElement);
 
-    // Trigger download
-    document.body.appendChild(link);
-    link.click();
+      // PDF 생성
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
 
-    // Cleanup
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
 
-    toast({
-      title: "다운로드 완료",
-      description: "분석 결과가 Markdown 파일로 다운로드되었습니다.",
-    });
+      // 첫 페이지 추가
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // 페이지가 여러 개 필요한 경우
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // PDF 다운로드
+      pdf.save(`${team.name}_분석결과_${new Date().toISOString().split('T')[0]}.pdf`);
+
+      toast({
+        title: "다운로드 완료",
+        description: "분석 결과가 PDF 파일로 다운로드되었습니다.",
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast({
+        title: "PDF 생성 실패",
+        description: "PDF 생성 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    }
   };
 
   const generateReportMarkdown = (data: typeof analysisData): string => {
@@ -263,7 +302,7 @@ export default function AnalysisPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div id="analysis-report" className="space-y-6">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>

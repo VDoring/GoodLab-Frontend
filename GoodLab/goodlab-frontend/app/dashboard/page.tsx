@@ -26,6 +26,8 @@ export default function DashboardPage() {
   const [analysisResults, setAnalysisResults] = useState<any[]>([]);
 
   const generateActivities = () => {
+    if (!user) return;
+
     const recentActivities: Activity[] = [];
 
     // Add document activities

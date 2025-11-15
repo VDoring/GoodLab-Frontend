@@ -1,6 +1,6 @@
 "use client";
 
-import type { User, Room, Team, TeamMember, RoomMember, AnalysisResult, Document, DocumentPermission } from '@/types';
+import type { User, Room, Team, TeamMember, RoomMember, AnalysisResult, Document, DocumentPermission, PermissionChangeHistory } from '@/types';
 import {
   MOCK_USERS,
   MOCK_ROOMS,
@@ -24,6 +24,7 @@ const KEYS = {
   ANALYSIS_RESULTS: 'goodlab_analysis_results',
   DOCUMENTS: 'goodlab_documents',
   DOCUMENT_PERMISSIONS: 'goodlab_document_permissions',
+  PERMISSION_HISTORY: 'goodlab_permission_history',
   INITIALIZED: 'goodlab_initialized',
 };
 
@@ -43,6 +44,7 @@ export function initializeMockDB() {
   localStorage.setItem(KEYS.ANALYSIS_RESULTS, JSON.stringify([MOCK_ANALYSIS_RESULT]));
   localStorage.setItem(KEYS.DOCUMENTS, JSON.stringify(MOCK_DOCUMENTS));
   localStorage.setItem(KEYS.DOCUMENT_PERMISSIONS, JSON.stringify(MOCK_DOCUMENT_PERMISSIONS));
+  localStorage.setItem(KEYS.PERMISSION_HISTORY, JSON.stringify([]));
   localStorage.setItem(KEYS.INITIALIZED, 'true');
 
   console.log('✅ Mock DB initialized');
@@ -366,5 +368,40 @@ export const analysisDB = {
     results[index] = { ...results[index], ...data };
     localStorage.setItem(KEYS.ANALYSIS_RESULTS, JSON.stringify(results));
     return results[index];
+  },
+};
+
+// ========== Permission Change History CRUD ==========
+export const permissionChangeHistoryDB = {
+  getAll: (): PermissionChangeHistory[] => {
+    if (typeof window === 'undefined') return [];
+    const data = localStorage.getItem(KEYS.PERMISSION_HISTORY);
+    return data ? JSON.parse(data) : [];
+  },
+
+  getByTargetUserId: (userId: string): PermissionChangeHistory[] => {
+    return permissionChangeHistoryDB.getAll().filter((h) => h.target_user_id === userId);
+  },
+
+  create: (history: Omit<PermissionChangeHistory, 'id' | 'created_at'>): PermissionChangeHistory => {
+    const histories = permissionChangeHistoryDB.getAll();
+    const newHistory: PermissionChangeHistory = {
+      ...history,
+      id: `perm-history-${Date.now()}`,
+      created_at: new Date().toISOString(),
+    };
+    histories.unshift(newHistory); // 최신 항목이 먼저 오도록
+    localStorage.setItem(KEYS.PERMISSION_HISTORY, JSON.stringify(histories));
+    return newHistory;
+  },
+
+  // 최근 N개 가져오기
+  getRecent: (limit: number = 20): PermissionChangeHistory[] => {
+    return permissionChangeHistoryDB.getAll().slice(0, limit);
+  },
+
+  // 특정 관리자가 수행한 이력
+  getByChangedBy: (adminId: string): PermissionChangeHistory[] => {
+    return permissionChangeHistoryDB.getAll().filter((h) => h.changed_by === adminId);
   },
 };
