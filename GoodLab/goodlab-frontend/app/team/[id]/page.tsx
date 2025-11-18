@@ -389,11 +389,15 @@ export default function TeamDetailPage() {
       return;
     }
 
-    togglePin(announcementId);
+    // togglePin 호출 전에 현재 상태를 저장
     const announcement = announcements.find((a) => a.id === announcementId);
+    const wasPinned = announcement?.pinned || false;
+
+    togglePin(announcementId);
+
     toast({
-      title: announcement?.pinned ? "고정 해제" : "고정 완료",
-      description: announcement?.pinned
+      title: wasPinned ? "고정 해제" : "고정 완료",
+      description: wasPinned
         ? "공지사항 고정이 해제되었습니다."
         : "공지사항이 상단에 고정되었습니다.",
     });

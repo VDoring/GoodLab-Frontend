@@ -505,10 +505,19 @@ export default function RoomDetailPage() {
 
           {/* Teams List */}
           <div className="space-y-4">
-            {teams.map((team) => {
-              const { members, leader } = getTeamDetails(team.id);
-              return (
-                <Card key={team.id}>
+            {/* 일반 사용자는 자신이 속한 팀만 표시, 교수/슈퍼관리자는 모든 팀 표시 */}
+            {(() => {
+              const displayTeams = isAdmin
+                ? teams
+                : teams.filter(team => {
+                    const teamMembers = teamMemberDB.getByTeamId(team.id);
+                    return teamMembers.some(tm => tm.user_id === user?.id);
+                  });
+
+              return displayTeams.map((team) => {
+                const { members, leader } = getTeamDetails(team.id);
+                return (
+                  <Card key={team.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="flex items-center gap-2">
@@ -588,11 +597,20 @@ export default function RoomDetailPage() {
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
 
-          {teams.length === 0 && (
+          {(() => {
+            const displayTeams = isAdmin
+              ? teams
+              : teams.filter(team => {
+                  const teamMembers = teamMemberDB.getByTeamId(team.id);
+                  return teamMembers.some(tm => tm.user_id === user?.id);
+                });
+            return displayTeams.length === 0;
+          })() && (
             <div className="flex flex-col items-center justify-center py-12">
               <p className="text-muted-foreground mb-4">
                 아직 생성된 팀이 없습니다.

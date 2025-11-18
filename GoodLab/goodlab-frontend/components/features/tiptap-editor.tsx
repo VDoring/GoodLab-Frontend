@@ -185,6 +185,16 @@ export function TiptapEditor({
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
         if (editor) {
+          // LocalStorage 용량 경고 (Base64는 원본보다 약 33% 더 큼)
+          const estimatedSize = (base64.length * 0.75) / 1024 / 1024; // MB
+          if (estimatedSize > 2) {
+            toast({
+              title: "큰 이미지 경고",
+              description: `이미지 크기가 약 ${estimatedSize.toFixed(2)}MB입니다. 문서 저장 시 용량 제한이 있을 수 있습니다.`,
+              variant: "default",
+            });
+          }
+
           editor.chain().focus().setImage({ src: base64 }).run();
           setImageDialogOpen(false);
           setImageUrl('');
@@ -204,6 +214,16 @@ export function TiptapEditor({
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
         if (editor) {
+          // LocalStorage 용량 경고 (Base64는 원본보다 약 33% 더 큼)
+          const estimatedSize = (base64.length * 0.75) / 1024 / 1024; // MB
+          if (estimatedSize > 2) {
+            toast({
+              title: "큰 이미지 경고",
+              description: `이미지 크기가 약 ${estimatedSize.toFixed(2)}MB입니다. 문서 저장 시 용량 제한이 있을 수 있습니다.`,
+              variant: "default",
+            });
+          }
+
           editor.chain().focus().setImage({ src: base64 }).run();
           setImageDialogOpen(false);
           setImageUrl('');
