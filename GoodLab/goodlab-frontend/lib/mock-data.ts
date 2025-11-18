@@ -1,4 +1,4 @@
-import type { User, Room, Team, TeamMember, RoomMember, AnalysisResult, GitHubAnalysis, NotionAnalysis, Document, DocumentPermission } from '@/types';
+import type { User, Room, Team, TeamMember, RoomMember, AnalysisResult, GitHubAnalysis, Document, DocumentPermission } from '@/types';
 
 // 더미 유저 데이터
 export const MOCK_USERS: User[] = [
@@ -129,7 +129,6 @@ export const MOCK_TEAMS: Team[] = [
     name: '팀 A',
     leader_id: 'user-3',
     github_url: 'https://github.com/team-a/project',
-    notion_url: 'https://notion.so/team-a',
     created_at: '2024-02-01T00:00:00Z',
     updated_at: '2024-02-01T00:00:00Z',
   },
@@ -139,7 +138,6 @@ export const MOCK_TEAMS: Team[] = [
     name: '팀 B',
     leader_id: 'user-4',
     github_url: 'https://github.com/team-b/project',
-    notion_url: 'https://notion.so/team-b',
     created_at: '2024-02-01T00:00:00Z',
     updated_at: '2024-02-01T00:00:00Z',
   },
@@ -149,7 +147,6 @@ export const MOCK_TEAMS: Team[] = [
     name: '팀 C',
     leader_id: 'user-5',
     github_url: 'https://github.com/team-c/seproject',
-    notion_url: 'https://notion.so/team-c',
     created_at: '2024-02-01T00:00:00Z',
     updated_at: '2024-02-01T00:00:00Z',
   },
@@ -159,7 +156,6 @@ export const MOCK_TEAMS: Team[] = [
     name: '웹팀 1',
     leader_id: 'user-7',
     github_url: 'https://github.com/webteam1/project',
-    notion_url: 'https://notion.so/webteam1',
     created_at: '2024-02-05T00:00:00Z',
     updated_at: '2024-02-05T00:00:00Z',
   },
@@ -169,7 +165,6 @@ export const MOCK_TEAMS: Team[] = [
     name: '웹팀 2',
     leader_id: 'user-8',
     github_url: undefined,
-    notion_url: undefined,
     created_at: '2024-02-05T00:00:00Z',
     updated_at: '2024-02-05T00:00:00Z',
   },
@@ -351,38 +346,16 @@ export const MOCK_GITHUB_ANALYSIS: GitHubAnalysis[] = [
   },
 ];
 
-export const MOCK_NOTION_ANALYSIS: NotionAnalysis[] = [
-  {
-    user: '박팀장',
-    pages: 15,
-    comments: 48,
-    insights: '회의록 작성 및 문서 정리 주도',
-  },
-  {
-    user: '최학생',
-    pages: 12,
-    comments: 35,
-    insights: '요구사항 명세서 작성',
-  },
-  {
-    user: '정학생',
-    pages: 8,
-    comments: 22,
-    insights: '디자인 문서 및 API 명세 작성',
-  },
-];
-
 export const MOCK_ANALYSIS_RESULT: AnalysisResult = {
   id: 'analysis-1',
   team_id: 'team-1',
   status: 'completed',
   github_data: MOCK_GITHUB_ANALYSIS,
-  notion_data: MOCK_NOTION_ANALYSIS,
   ai_insights: `
 ## 팀 협업 종합 평가
 
 ### 전체 요약
-팀 A는 전반적으로 균형 잡힌 협업을 보여주고 있습니다. GitHub 활동과 Notion 문서화가 활발하게 이루어지고 있습니다.
+팀 A는 전반적으로 균형 잡힌 협업을 보여주고 있습니다. GitHub 활동이 활발하게 이루어지고 있습니다.
 
 ### 강점
 - 박팀장의 리더십 하에 체계적인 프로젝트 관리

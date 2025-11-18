@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Download, Copy, Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface QRCodeDialogProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export function QRCodeDialog({
 }: QRCodeDialogProps) {
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const handleCopyLink = async () => {
     try {
@@ -38,7 +40,11 @@ export function QRCodeDialog({
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy:", error);
-      alert("링크 복사에 실패했습니다.");
+      toast({
+        title: "복사 실패",
+        description: "링크 복사에 실패했습니다.",
+        variant: "destructive",
+      });
     }
   };
 

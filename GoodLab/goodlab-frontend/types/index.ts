@@ -37,7 +37,6 @@ export interface Team {
   name: string;
   leader_id: string | null;
   github_url?: string;
-  notion_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -48,6 +47,18 @@ export interface TeamMember {
   user_id: string;
   role: 'team_leader' | 'member';
   joined_at: string;
+}
+
+// Announcement Types
+export interface Announcement {
+  id: string;
+  team_id: string;
+  title: string;
+  content: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  pinned: boolean; // 고정 여부
 }
 
 // Analysis Types
@@ -61,19 +72,11 @@ export interface GitHubAnalysis {
   insights: string;
 }
 
-export interface NotionAnalysis {
-  user: string;
-  pages: number;
-  comments: number;
-  insights: string;
-}
-
 export interface AnalysisResult {
   id: string;
   team_id: string;
   status: AnalysisStatus;
   github_data?: GitHubAnalysis[];
-  notion_data?: NotionAnalysis[];
   ai_insights?: string;
   pdf_url?: string;
   analyzed_at?: string;

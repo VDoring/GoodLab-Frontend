@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AnalysisResult, AnalysisStatus, GitHubAnalysis, NotionAnalysis } from '@/types';
+import type { AnalysisResult, AnalysisStatus, GitHubAnalysis } from '@/types';
 import { analysisDB, initializeMockDB } from '@/lib/mock-db';
 
 interface AnalysisState {
@@ -52,33 +52,11 @@ const generateMockAnalysis = (teamId: string): Omit<AnalysisResult, 'id' | 'crea
     },
   ];
 
-  const mockNotion: NotionAnalysis[] = [
-    {
-      user: "김철수",
-      pages: Math.floor(Math.random() * 10) + 5,
-      comments: Math.floor(Math.random() * 30) + 15,
-      insights: "문서 작성에 적극적입니다.",
-    },
-    {
-      user: "이영희",
-      pages: Math.floor(Math.random() * 15) + 8,
-      comments: Math.floor(Math.random() * 40) + 20,
-      insights: "Notion 문서 작성과 팀 협업에 뛰어납니다.",
-    },
-    {
-      user: "박민수",
-      pages: Math.floor(Math.random() * 8) + 3,
-      comments: Math.floor(Math.random() * 25) + 10,
-      insights: "문서 작성 참여도를 높이면 좋겠습니다.",
-    },
-  ];
-
   return {
     team_id: teamId,
     status: 'completed',
     github_data: mockGitHub,
-    notion_data: mockNotion,
-    ai_insights: "팀 전체적으로 균형잡힌 협업이 이루어지고 있습니다. 김철수님이 리더십을 발휘하며 팀을 이끌고 있고, 이영희님은 문서화에 강점을 보입니다. 박민수님의 참여도를 높이면 더욱 발전할 것으로 보입니다.",
+    ai_insights: "팀 전체적으로 균형잡힌 협업이 이루어지고 있습니다. 김철수님이 리더십을 발휘하며 팀을 이끌고 있고, 이영희님은 코드 리뷰에 강점을 보입니다. 박민수님의 참여도를 높이면 더욱 발전할 것으로 보입니다.",
     analyzed_at: new Date().toISOString(),
   };
 };

@@ -31,7 +31,7 @@ import * as z from "zod";
 import { useRoomStore, useTeamStore, useAuthStore } from "@/store";
 import { teamMemberDB, userDB, roomMemberDB } from "@/lib/mock-db";
 import { useToast } from "@/hooks/use-toast";
-import { useRequireAdmin } from "@/hooks";
+import { useRequireAuth } from "@/hooks";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const teamSchema = z.object({
@@ -67,7 +67,7 @@ export default function RoomDetailPage() {
   const [selectedTeamForAddMember, setSelectedTeamForAddMember] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { hasPermission } = useRequireAdmin();
+  const { isAuthenticated } = useRequireAuth();
   const { toast } = useToast();
   const user = useAuthStore((state) => state.user);
   const rooms = useRoomStore((state) => state.rooms);
@@ -83,15 +83,35 @@ export default function RoomDetailPage() {
 
   const room = rooms.find((r) => r.id === roomId);
 
+  // 사용자가 이 방의 멤버인지 확인
+  const isRoomMember = user ? roomMemberDB.getByRoomId(roomId).some(rm => rm.user_id === user.id) : false;
+  const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
+
   useEffect(() => {
-    if (hasPermission) {
+    if (isAuthenticated) {
       fetchRooms();
       fetchTeamsByRoom(roomId);
     }
-  }, [hasPermission, roomId, fetchRooms, fetchTeamsByRoom]);
+  }, [isAuthenticated, roomId, fetchRooms, fetchTeamsByRoom]);
 
-  if (!hasPermission) {
+  if (!isAuthenticated) {
     return null;
+  }
+
+  // 방 멤버가 아니고 관리자도 아니면 접근 불가
+  if (!isRoomMember && !isAdmin) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-4">이 방에 접근 권한이 없습니다.</p>
+            <Button onClick={() => router.push('/dashboard')}>
+              대시보드로 돌아가기
+            </Button>
+          </div>
+        </div>
+      </MainLayout>
+    );
   }
 
   if (!room) {
@@ -303,13 +323,14 @@ export default function RoomDetailPage() {
               <p className="text-muted-foreground">{room.description}</p>
             </div>
             <div className="flex gap-2">
-              <Dialog open={isEditRoomDialogOpen} onOpenChange={setIsEditRoomDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <Settings className="mr-2 h-4 w-4" />
-                    방 설정
-                  </Button>
-                </DialogTrigger>
+              {isAdmin && (
+                <Dialog open={isEditRoomDialogOpen} onOpenChange={setIsEditRoomDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Settings className="mr-2 h-4 w-4" />
+                      방 설정
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="sm:max-w-[500px]">
                   <form onSubmit={handleSubmitRoom(onSubmitRoomEdit)}>
                     <DialogHeader>
@@ -417,6 +438,7 @@ export default function RoomDetailPage() {
                   </form>
                 </DialogContent>
               </Dialog>
+              )}
             </div>
           </div>
           <div className="flex gap-4 text-sm text-muted-foreground">
@@ -429,16 +451,17 @@ export default function RoomDetailPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">팀 목록</h2>
-            <Dialog
-              open={isCreateTeamDialogOpen}
-              onOpenChange={setIsCreateTeamDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  새 팀 만들기
-                </Button>
-              </DialogTrigger>
+            {isAdmin && (
+              <Dialog
+                open={isCreateTeamDialogOpen}
+                onOpenChange={setIsCreateTeamDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    새 팀 만들기
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <DialogHeader>
@@ -477,6 +500,7 @@ export default function RoomDetailPage() {
                 </form>
               </DialogContent>
             </Dialog>
+            )}
           </div>
 
           {/* Teams List */}
@@ -502,27 +526,31 @@ export default function RoomDetailPage() {
                         )}
                       </CardTitle>
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenAddMember(team.id)}
-                        >
-                          <UserPlus className="mr-1 h-4 w-4" />
-                          팀원 추가
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenAddMember(team.id)}
+                          >
+                            <UserPlus className="mr-1 h-4 w-4" />
+                            팀원 추가
+                          </Button>
+                        )}
                         <Link href={`/team/${team.id}`}>
                           <Button variant="outline" size="sm">
                             <Settings className="mr-1 h-4 w-4" />
-                            관리
+                            {isAdmin ? '관리' : '보기'}
                           </Button>
                         </Link>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteTeam(team.id, team.name)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteTeam(team.id, team.name)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                     <CardDescription>
@@ -533,7 +561,14 @@ export default function RoomDetailPage() {
                     <div className="space-y-2">
                       <div className="text-sm font-medium">팀원 목록</div>
                       <div className="flex flex-wrap gap-2">
-                        {members.map((member) => (
+                        {members
+                          .sort((a, b) => {
+                            // 팀장을 가장 상단에 표시
+                            if (leader?.id === a.id) return -1;
+                            if (leader?.id === b.id) return 1;
+                            return 0;
+                          })
+                          .map((member) => (
                           <div
                             key={member.id}
                             className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-sm"

@@ -110,14 +110,38 @@ export default function DocumentEditPage() {
 
   // Auto-save (debounced)
   useEffect(() => {
-    if (!hasUnsavedChanges || !isEditable) return;
+    if (!hasUnsavedChanges || !isEditable || !currentDocument || !user) return;
 
     const timer = setTimeout(() => {
-      handleSave();
+      setIsSaving(true);
+      try {
+        updateDocument(currentDocument.id, {
+          title,
+          content,
+          last_edited_by: user.id,
+        });
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'QuotaExceededError') {
+          toast({
+            title: '저장 공간 부족',
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: '오류',
+            description: '문서 자동 저장 중 오류가 발생했습니다.',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        setIsSaving(false);
+      }
     }, 2000); // Auto-save after 2 seconds of inactivity
 
     return () => clearTimeout(timer);
-  }, [content, title, hasUnsavedChanges, isEditable, handleSave]);
+  }, [content, title, hasUnsavedChanges, isEditable, currentDocument?.id, user?.id, updateDocument, toast]);
 
   // Warn before leaving with unsaved changes
   useEffect(() => {
@@ -221,6 +245,9 @@ export default function DocumentEditPage() {
           onChange={handleContentChange}
           editable={isEditable}
           placeholder={isEditable ? '내용을 입력하세요...' : '내용이 없습니다'}
+          currentDocumentId={documentId}
+          roomId={currentDocument.room_id}
+          teamId={currentDocument.team_id}
         />
 
         {/* Footer */}

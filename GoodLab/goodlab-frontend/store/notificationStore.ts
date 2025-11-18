@@ -22,7 +22,7 @@ const generateMockNotifications = (userId: string): Notification[] => {
       user_id: userId,
       type: 'analysis_complete',
       title: '분석 완료',
-      message: '팀 A의 GitHub/Notion 분석이 완료되었습니다.',
+      message: '팀 A의 GitHub 분석이 완료되었습니다.',
       link: '/team/team-1/analysis',
       read: false,
       created_at: new Date(now.getTime() - 1000 * 60 * 10).toISOString(), // 10분 전

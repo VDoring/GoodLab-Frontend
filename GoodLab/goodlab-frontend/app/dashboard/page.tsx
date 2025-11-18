@@ -132,15 +132,6 @@ export default function DashboardPage() {
       return sum;
     }, 0);
 
-  const totalNotionPages = analysisResults
-    .filter(a => a.status === 'completed' && a.notion_data)
-    .reduce((sum, a) => {
-      if (a.notion_data && Array.isArray(a.notion_data)) {
-        return sum + a.notion_data.reduce((acc, member) => acc + (member.pages || 0), 0);
-      }
-      return sum;
-    }, 0);
-
   const totalPRs = analysisResults
     .filter(a => a.status === 'completed' && a.github_data)
     .reduce((sum, a) => {
@@ -262,12 +253,6 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">GitHub 커밋</p>
                     <p className="text-sm text-muted-foreground">{totalCommits}개</p>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">Notion 페이지</p>
-                    <p className="text-sm text-muted-foreground">{totalNotionPages}개</p>
                   </div>
                 </div>
                 <div>

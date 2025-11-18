@@ -28,7 +28,8 @@ export function useRole(requiredRole?: UserRole | UserRole[]) {
   };
 
   const hasAnyRole = (roles: UserRole[]): boolean => {
-    return roles.some((role) => user?.role === role);
+    // 권한 배열 중 하나라도 만족하면 true (계층 구조 고려)
+    return roles.some((role) => hasRole(role));
   };
 
   const checkRole = requiredRole

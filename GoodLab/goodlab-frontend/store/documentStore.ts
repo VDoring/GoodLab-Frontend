@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Document, DocumentPermission, DocumentPermissionLevel, TiptapContent } from '@/types';
 import { roomMemberDB, teamMemberDB } from '@/lib/mock-db';
+import { logger } from '@/lib/logger';
 
 // Helper functions to access localStorage
 const getDocumentsDB = (): Document[] => {
@@ -167,25 +168,39 @@ export const useDocumentStore = create<DocumentState>()(
       },
 
       updateDocument: (id: string, data: Partial<Document>) => {
-        const documents = getDocumentsDB();
-        const index = documents.findIndex(doc => doc.id === id);
-        if (index === -1) return false;
+        try {
+          const documents = getDocumentsDB();
+          const index = documents.findIndex(doc => doc.id === id);
+          if (index === -1) return false;
 
-        documents[index] = {
-          ...documents[index],
-          ...data,
-          updated_at: new Date().toISOString(),
-        };
+          documents[index] = {
+            ...documents[index],
+            ...data,
+            updated_at: new Date().toISOString(),
+          };
 
-        saveDocumentsDB(documents);
-        set({ documents });
+          saveDocumentsDB(documents);
+          set({ documents });
 
-        // 현재 문서 업데이트
-        if (get().currentDocument?.id === id) {
-          set({ currentDocument: documents[index] });
+          // 현재 문서 업데이트
+          if (get().currentDocument?.id === id) {
+            set({ currentDocument: documents[index] });
+          }
+
+          return true;
+        } catch (error) {
+          logger.error('Failed to update document', {
+            documentId: id,
+            error: error instanceof Error ? error.message : String(error)
+          });
+          // localStorage quota exceeded 에러 처리 - 에러를 throw하여 호출자가 처리하도록 함
+          if (error instanceof Error && error.name === 'QuotaExceededError') {
+            const quotaError = new Error('저장 공간이 부족합니다. 이미지 크기를 줄이거나 일부 문서를 삭제해주세요.\n\n권장사항:\n1. 이미지를 압축하여 다시 업로드\n2. 불필요한 문서 삭제\n3. 이미지 URL 링크 사용');
+            quotaError.name = 'QuotaExceededError';
+            throw quotaError;
+          }
+          return false;
         }
-
-        return true;
       },
 
       deleteDocument: (id: string) => {
